@@ -8,7 +8,7 @@ type BookProps = {
 };
 
 export default function Book({ book }: BookProps) {
-    const pages = [{ id: "blank", title: "", fullText: "" }, ...book.chapters];
+    const pages = paginateChapters(book.chapters);
     const [spreadIndex, setSpreadIndex] = useState(0);
 
     const totalPages = pages.length;
@@ -32,6 +32,33 @@ export default function Book({ book }: BookProps) {
         }
     }
 
+    function paginateChapters(chapters: BookType["chapters"]){
+        const PAGE_MAX_LIMIT = 800;
+
+        const resultPages = [
+            {id: "blank", title:"", fullText:""}
+        ]
+
+        chapters.forEach((chapters) => {
+            const text = chapters.fullText;
+            let start = 0;
+            let pageNumber = 0;
+
+            while(start < text.length){
+                const slice = text.slice(start, start + PAGE_MAX_LIMIT);
+
+                resultPages.push({
+                    id: chapters.id + "--page--" + pageNumber,
+                    title: pageNumber === 0 ? chapters.title: "",
+                    fullText: slice,
+                });
+                start += PAGE_MAX_LIMIT;
+                pageNumber ++;
+            };
+        });
+        return resultPages;
+    }
+
     return (
         <div className="relative">
             {/* Book */}
@@ -44,7 +71,7 @@ export default function Book({ book }: BookProps) {
                         {leftPage.title}
                     </h2>
                     {/* whitespace-pre-line preserves the line breaks in the text, keeping the original formatting */}
-                    <p className="text-justify whitespace-pre-line text-md">
+                    <p className="text-justify whitespace-pre-line text-xs">
                         {leftPage.fullText}
                     </p>
                 </div>
@@ -54,7 +81,7 @@ export default function Book({ book }: BookProps) {
                     <h2 className="text-center text-2xl mb-4">
                         {rightPage.title}
                     </h2>
-                    <p className="text-justify whitespace-pre-line text-md">
+                    <p className="text-justify whitespace-pre-line text-xs">
                         {rightPage.fullText}
                     </p>
                 </div>
