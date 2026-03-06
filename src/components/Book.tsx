@@ -13,6 +13,74 @@ type Page = {
   fullText: string;
 };
 
+function fitTextIntoPage(
+  text: string,
+  title: string,
+  showTitle: boolean,
+  measuredTitleHeight: HTMLHeadingElement,
+  measureTextContainerHeight: HTMLDivElement,
+  measureTextParagraphHeight: HTMLParagraphElement
+){
+  measureTextParagraphHeight.innerText = "";
+  measuredTitleHeight.innerText = showTitle ? title:"";
+
+  const words = text.split(" ");
+  const fittedWords:string[] = [];
+
+  for (const word of words){
+    fittedWords.push(word)
+    measureTextParagraphHeight.innerText = fittedWords.join(" ").trimEnd();
+
+    if (measureTextParagraphHeight.scrollHeight > measureTextContainerHeight.clientHeight){
+      fittedWords.pop()
+      break;
+    }
+  }
+
+  return {
+    fittedText: fittedWords.join(" ").trimEnd(),
+    remaining: words.slice(fittedWords.length).join(" ")
+  }
+}
+
+function paginateByHeight(
+  chapters: BookType["chapters"],
+  measuredTitleHeight: HTMLHeadingElement,
+  measureTextContainerHeight: HTMLDivElement,
+  measureTextParagraphHeight: HTMLParagraphElement
+){
+  const pages = [{ id: "blank", title: "", fullText: "" }];
+
+  chapters.forEach((chapter) => {
+    let remainingText = chapter.fullText;
+    let isFirstPage = true;
+    let pageIndex = 0;
+
+    while (remainingText.length > 0){
+      const { fittedText, remaining } = fitTextIntoPage(
+        remainingText,
+        chapter.title,
+        isFirstPage,
+        measuredTitleHeight,
+        measureTextContainerHeight,
+        measureTextParagraphHeight
+      );
+      pages.push({
+        id: chapter.id + "--page--" + pageIndex,
+        title: isFirstPage ? chapter.title : "",
+        fullText: fittedText
+      });
+      
+      remainingText = remaining;
+      pageIndex ++;
+      isFirstPage = false;
+
+      if (fittedText.length === 0) break;
+    };
+  });
+  return pages;
+}
+
 export default function Book({ book }: BookProps) {
   const [pages, setPages] = useState<Page[]>([]);
   const [spreadIndex, setSpreadIndex] = useState(0);
@@ -38,76 +106,65 @@ export default function Book({ book }: BookProps) {
     }
   }
 
-  function paginateByHeight(
-    chapters: BookType["chapters"],
-    measuredHeight: HTMLDivElement,
-  ) {
-    const pages = [{ id: "blank", title: "", fullText: "" }];
+  const titleMeasureRef = useRef<HTMLHeadingElement | null>(null);
+  const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const textMeasureRef = useRef<HTMLParagraphElement | null>(null);
 
-    chapters.forEach((chapter) => {
-      const words = chapter.fullText.split(" ");
-      const measure = measuredHeight;
-
-      let currentWords: string[] = [];
-      let isFirstPage = true;
-      let pageIndex = 0;
-
-      for (const word of words) {
-        currentWords.push(word);
-        const candidateText = currentWords.join(" ");
-        measure.innerText = candidateText;
-
-        if (measure.scrollHeight > measure.clientHeight) {
-          currentWords.pop();
-          pages.push({
-            id: chapter.id + "--page--" + pageIndex,
-            title: isFirstPage ? chapter.title : "",
-            fullText: currentWords.join(" "),
-          });
-          isFirstPage = false;
-          pageIndex++;
-          currentWords = [word];
-        }
-      }
-      if (currentWords.length) {
-        pages.push({
-          id: chapter.id + "--page--" + pageIndex,
-          title: isFirstPage ? chapter.title : "",
-          fullText: currentWords.join(" "),
-        });
-      }
-    });
-    return pages;
-  }
-
-  const measureRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!measureRef.current) return;
+    const textContainer = textContainerRef.current;
+    const textMeasure = textMeasureRef.current;
+    const titleMeasure = titleMeasureRef.current;
+
+    if (!textContainer || !textMeasure || !titleMeasure) return;
+
     console.log(
-      "Client Height:",
-      measureRef.current.clientHeight,
-      "Scroll Height:",
-      measureRef.current.scrollHeight,
+      "Text Container Client Height: ",
+      textContainer.clientHeight,
+      " Text Container Scroll Height: ",
+      textContainer.scrollHeight,
+      " Paragraph Text Client Height: ",
+      textMeasure.clientHeight,
+      " Paragraph Text Scroll Height: ",
+      textMeasure.scrollHeight,
+      " Title Client Height: ",
+      titleMeasure.clientHeight,
+      " Title Scroll Height: ",
+      titleMeasure.scrollHeight,
     );
-    const newPages = paginateByHeight(book.chapters, measureRef.current);
+
+    const newPages = paginateByHeight(
+      book.chapters, 
+      titleMeasure,
+      textContainer,
+      textMeasure
+    );
     setPages(newPages);
-  }, [book]);
+  }, [book, ]);
 
   return (
     <div className="relative">
       {/* Measure ref */}
       <div
-        ref={measureRef}
         className={`
           absolute invisible pointer-events-none 
-          w-250 h-150 mx-auto
-          overflow-hidden
-          p-8 pb-12
+          w-125 h-150 mx-auto
         `}
       >
-              <h2 className="text-center text-2xl mb-4"></h2>
-              {/* whitespace-pre-line preserves the line breaks in the text, keeping the original formatting */}
-              <p className="w-full text-justify whitespace-pre-line text-xs"></p>
+        <div className="w-full h-full p-8 pb-12 pl-12 flex flex-col">
+          <h2
+          ref={titleMeasureRef} 
+          className="text-center text-2xl mb-4 empty:hidden"
+          ></h2>
+          <div 
+            ref={textContainerRef}
+            className="overflow-hidden"
+          >
+            <p 
+              ref={textMeasureRef}
+              className="w-full h-full text-justify whitespace-pre-line text-md"
+            ></p>
+          </div>
+        </div>
       </div>
       <div className="flex flex-row">
         {/* Previous button */}
@@ -134,9 +191,9 @@ export default function Book({ book }: BookProps) {
             `}
             >
               <div className="p-8 pl-12 pb-12">
-                <h2 className="text-center text-2xl mb-4">{leftPage.title}</h2>
+                {(leftPage.title) && <h2 className="text-center text-2xl mb-4">{leftPage.title}</h2>}
                 {/* whitespace-pre-line preserves the line breaks in the text, keeping the original formatting */}
-                <p className="w-full text-justify whitespace-pre-line text-xs">
+                <p className="w-full text-justify whitespace-pre-line text-md">
                   {leftPage.fullText}
                 </p>
               </div>
@@ -150,8 +207,8 @@ export default function Book({ book }: BookProps) {
             `}
             >
               <div className="p-8 pr-12 pb-12">
-                <h2 className="text-center text-2xl mb-4">{rightPage.title}</h2>
-                <p className="w-full text-justify whitespace-pre-line text-xs">
+                {rightPage.title && <h2 className="text-center text-2xl mb-4">{rightPage.title}</h2>}
+                <p className="w-full text-justify whitespace-pre-line text-md">
                   {rightPage.fullText}
                 </p>
               </div>
