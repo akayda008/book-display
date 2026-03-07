@@ -2,7 +2,7 @@
 
 import { Book as BookType } from "@/types/book";
 import { useEffect, useRef, useState } from "react";
-import { paginateByHeight } from "../../utils/pagination";
+import { paginateByHeight } from "../utils/pagination";
 
 type BookProps = {
   book: BookType;
