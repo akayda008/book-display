@@ -2,6 +2,7 @@
 
 import { Book as BookType } from "@/types/book";
 import { useEffect, useRef, useState } from "react";
+import { paginateByHeight } from "../../utils/pagination";
 
 type BookProps = {
   book: BookType;
@@ -12,74 +13,6 @@ type Page = {
   title: string;
   fullText: string;
 };
-
-function fitTextIntoPage(
-  text: string,
-  title: string,
-  showTitle: boolean,
-  measuredTitleHeight: HTMLHeadingElement,
-  measureTextContainerHeight: HTMLDivElement,
-  measureTextParagraphHeight: HTMLParagraphElement
-){
-  measureTextParagraphHeight.innerText = "";
-  measuredTitleHeight.innerText = showTitle ? title:"";
-
-  const words = text.split(" ");
-  const fittedWords:string[] = [];
-
-  for (const word of words){
-    fittedWords.push(word)
-    measureTextParagraphHeight.innerText = fittedWords.join(" ").trimEnd();
-
-    if (measureTextParagraphHeight.scrollHeight > measureTextContainerHeight.clientHeight){
-      fittedWords.pop()
-      break;
-    }
-  }
-
-  return {
-    fittedText: fittedWords.join(" ").trimEnd(),
-    remaining: words.slice(fittedWords.length).join(" ")
-  }
-}
-
-function paginateByHeight(
-  chapters: BookType["chapters"],
-  measuredTitleHeight: HTMLHeadingElement,
-  measureTextContainerHeight: HTMLDivElement,
-  measureTextParagraphHeight: HTMLParagraphElement
-){
-  const pages = [{ id: "blank", title: "", fullText: "" }];
-
-  chapters.forEach((chapter) => {
-    let remainingText = chapter.fullText;
-    let isFirstPage = true;
-    let pageIndex = 0;
-
-    while (remainingText.length > 0){
-      const { fittedText, remaining } = fitTextIntoPage(
-        remainingText,
-        chapter.title,
-        isFirstPage,
-        measuredTitleHeight,
-        measureTextContainerHeight,
-        measureTextParagraphHeight
-      );
-      pages.push({
-        id: chapter.id + "--page--" + pageIndex,
-        title: isFirstPage ? chapter.title : "",
-        fullText: fittedText
-      });
-      
-      remainingText = remaining;
-      pageIndex ++;
-      isFirstPage = false;
-
-      if (fittedText.length === 0) break;
-    };
-  });
-  return pages;
-}
 
 export default function Book({ book }: BookProps) {
   const [pages, setPages] = useState<Page[]>([]);
