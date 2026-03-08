@@ -1,5 +1,19 @@
 import { Book } from "@/types/book";
 
+type PaginationState = {
+  chapterIndex: number
+  pageIndex: number
+  remainingParagraphs: string[]
+  isFirstPage: boolean
+}
+
+function extractIntoParagraphs(text: string):string[]{
+  return text
+    .split("\n\n")
+    .map(p => p.trim())
+    .filter(Boolean);
+}
+
 function findMaxWordsThatFit(
   words: string[],
   fittedParagraphs: string[],
@@ -89,48 +103,87 @@ function fitContentIntoPage(
   }
 }
 
-export function paginateByHeight(
+// export function paginateByHeight(
+//   chapters: Book["chapters"],
+//   titleHeight: HTMLHeadingElement,
+//   containerHeight: HTMLDivElement,
+//   paragraphHeight: HTMLParagraphElement
+// ){
+//   const pages = [{ id: "blank", title: "", fullText: "" }];
+
+//   chapters.forEach((chapter) => {
+//     let remainingParagraphs:string[] = extractIntoParagraphs(chapter.fullText);
+//     let isFirstPage = true;
+//     let pageIndex = 0;
+
+//     while (remainingParagraphs.length > 0){
+//       const { fittedParagraphs, remainingParagraphs:nextParagraphs } = fitContentIntoPage(
+//         remainingParagraphs,
+//         chapter.title,
+//         isFirstPage,
+//         titleHeight,
+//         containerHeight,
+//         paragraphHeight
+//       );
+      
+//       pages.push({
+//         id: `${chapter.id}--page--${pageIndex}`,
+//         title: isFirstPage ? chapter.title : "",
+//         fullText: fittedParagraphs.join("\n\n")
+//       });
+      
+//       remainingParagraphs = nextParagraphs;
+      
+//       pageIndex ++;
+//       isFirstPage = false;
+
+//     };
+//   });
+//   return pages;
+// }
+
+export function generateNextPage(
   chapters: Book["chapters"],
+  state: PaginationState,
   titleHeight: HTMLHeadingElement,
   containerHeight: HTMLDivElement,
   paragraphHeight: HTMLParagraphElement
-){
-  const pages = [{ id: "blank", title: "", fullText: "" }];
+) {
 
-  chapters.forEach((chapter) => {
-    let remainingParagraphs:string[] = extractIntoParagraphs(chapter.fullText);
-    let isFirstPage = true;
-    let pageIndex = 0;
+  if (state.chapterIndex >= chapters.length) {
+    return null;
+  }
 
-    while (remainingParagraphs.length > 0){
-      const { fittedParagraphs, remainingParagraphs:nextParagraphs } = fitContentIntoPage(
-        remainingParagraphs,
-        chapter.title,
-        isFirstPage,
-        titleHeight,
-        containerHeight,
-        paragraphHeight
-      );
-      
-      pages.push({
-        id: `${chapter.id}--page--${pageIndex}`,
-        title: isFirstPage ? chapter.title : "",
-        fullText: fittedParagraphs.join("\n\n")
-      });
-      
-      remainingParagraphs = nextParagraphs;
-      
-      pageIndex ++;
-      isFirstPage = false;
+  const chapter = chapters[state.chapterIndex];
 
-    };
-  });
-  return pages;
-}
+  if (state.remainingParagraphs.length === 0) {
+    state.remainingParagraphs = extractIntoParagraphs(chapter.fullText);
+  }
 
-export function extractIntoParagraphs(text: string):string[]{
-  return text
-    .split("\n\n")
-    .map(p => p.trim())
-    .filter(Boolean);
+  const { fittedParagraphs, remainingParagraphs } = fitContentIntoPage(
+    state.remainingParagraphs,
+    chapter.title,
+    state.isFirstPage,
+    titleHeight,
+    containerHeight,
+    paragraphHeight
+  );
+
+  const page = {
+    id: `${chapter.id}--page--${state.pageIndex}`,
+    title: state.isFirstPage ? chapter.title : "",
+    fullText: fittedParagraphs.join("\n\n")
+  };
+
+  state.remainingParagraphs = remainingParagraphs;
+  state.pageIndex += 1;
+  state.isFirstPage = false;
+
+  if (remainingParagraphs.length === 0) {
+    state.chapterIndex += 1;
+    state.pageIndex = 0;
+    state.isFirstPage = true;
+  }
+
+  return page;
 }

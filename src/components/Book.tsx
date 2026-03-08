@@ -2,7 +2,7 @@
 
 import { Book as BookType } from "@/types/book";
 import { useEffect, useRef, useState } from "react";
-import { paginateByHeight } from "../utils/pagination";
+import { generateNextPage } from "../utils/pagination";
 
 type BookProps = {
   book: BookType;
@@ -28,9 +28,37 @@ export default function Book({ book }: BookProps) {
   const rightPage = pages[rightPageIndex] ?? { title: "", fullText: "" };
 
   function nextSpread() {
-    if (spreadIndex < totalSpreads - 1) {
-      setSpreadIndex((prev) => prev + 1);
+
+    const nextSpreadIndex = spreadIndex + 1;
+  
+    const textContainer = textContainerRef.current;
+    const textMeasure = textMeasureRef.current;
+    const titleMeasure = titleMeasureRef.current;
+  
+    if (!textContainer || !textMeasure || !titleMeasure) return;
+  
+    const newPages = [...pages];
+  
+    // how many pages we want loaded
+    const targetPages = (nextSpreadIndex + 3) * 2;
+  
+    while (newPages.length < targetPages) {
+  
+      const page = generateNextPage(
+        book.chapters,
+        paginationStateRef.current,
+        titleMeasure,
+        textContainer,
+        textMeasure
+      );
+  
+      if (!page) break;
+  
+      newPages.push(page);
     }
+  
+    setPages(newPages);
+    setSpreadIndex(nextSpreadIndex);
   }
 
   function previousSpread() {
@@ -42,6 +70,14 @@ export default function Book({ book }: BookProps) {
   const titleMeasureRef = useRef<HTMLHeadingElement | null>(null);
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const textMeasureRef = useRef<HTMLParagraphElement | null>(null);
+  const paginationStateRef = useRef({
+    chapterIndex: 0,
+    pageIndex: 0,
+    remainingParagraphs: [],
+    isFirstPage: true,
+  });
+  // eslint-disable-next-line react-hooks/refs
+  const isBookFinished = paginationStateRef.current.chapterIndex >= book.chapters.length;
 
   useEffect(() => {
     const textContainer = textContainerRef.current;
@@ -50,29 +86,27 @@ export default function Book({ book }: BookProps) {
 
     if (!textContainer || !textMeasure || !titleMeasure) return;
 
-    console.log(
-      "Text Container Client Height: ",
-      textContainer.clientHeight,
-      " Text Container Scroll Height: ",
-      textContainer.scrollHeight,
-      " Paragraph Text Client Height: ",
-      textMeasure.clientHeight,
-      " Paragraph Text Scroll Height: ",
-      textMeasure.scrollHeight,
-      " Title Client Height: ",
-      titleMeasure.clientHeight,
-      " Title Scroll Height: ",
-      titleMeasure.scrollHeight,
-    );
+    const newPages: Page[] = [
+      { id: "blank", title: "", fullText: "" }
+    ];
 
-    const newPages = paginateByHeight(
-      book.chapters, 
-      titleMeasure,
-      textContainer,
-      textMeasure
-    );
+    for (let i = 0; i < 5; i++) {
+      const page = generateNextPage(
+        book.chapters,
+        paginationStateRef.current,
+        titleMeasure,
+        textContainer,
+        textMeasure,
+      );
+
+      if (!page) break;
+
+      newPages.push(page);
+    }
     setPages(newPages);
-  }, [book, ]);
+  }, [book]);
+
+  
 
   return (
     <div className="relative">
@@ -85,14 +119,11 @@ export default function Book({ book }: BookProps) {
       >
         <div className="w-full h-full p-8 pb-12 pl-12 flex flex-col">
           <h2
-          ref={titleMeasureRef} 
-          className="text-center text-2xl mb-4 empty:hidden"
+            ref={titleMeasureRef}
+            className="text-center text-2xl mb-4 empty:hidden"
           ></h2>
-          <div 
-            ref={textContainerRef}
-            className="overflow-hidden"
-          >
-            <p 
+          <div ref={textContainerRef} className="overflow-hidden">
+            <p
               ref={textMeasureRef}
               className="w-full h-full text-justify whitespace-pre-line text-sm"
             ></p>
@@ -102,18 +133,18 @@ export default function Book({ book }: BookProps) {
       <div className="flex flex-row">
         {/* Previous button */}
         <button
-            onClick={previousSpread}
-            disabled={spreadIndex === 0}
-            className={`
+          onClick={previousSpread}
+          disabled={spreadIndex === 0}
+          className={`
             mx-4 my-auto px-4 py-2 text-xs text-slate-50
             max-h-fit rounded-2xl shadow-md 
             transistion bg-blue-600 
             hover:bg-blue-400 hover:shadow-xl
           `}
-          >
-            Previous Page
-          </button>
-      {/* Book */}
+        >
+          Previous Page
+        </button>
+        {/* Book */}
         <div className="flex flex-row w-250 h-150 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-100 relative">
           <div className="flex h-full flex-row">
             {/* Left Page */}
@@ -124,7 +155,11 @@ export default function Book({ book }: BookProps) {
             `}
             >
               <div className="p-8 pl-12 pb-12">
-                {(leftPage.title) && <h2 className="text-center text-2xl mb-4">{leftPage.title}</h2>}
+                {leftPage.title && (
+                  <h2 className="text-center text-2xl mb-4">
+                    {leftPage.title}
+                  </h2>
+                )}
                 {/* whitespace-pre-line preserves the line breaks in the text, keeping the original formatting */}
                 <p className="w-full text-justify whitespace-pre-line text-sm">
                   {leftPage.fullText}
@@ -140,7 +175,11 @@ export default function Book({ book }: BookProps) {
             `}
             >
               <div className="p-8 pr-12 pb-12">
-                {rightPage.title && <h2 className="text-center text-2xl mb-4">{rightPage.title}</h2>}
+                {rightPage.title && (
+                  <h2 className="text-center text-2xl mb-4">
+                    {rightPage.title}
+                  </h2>
+                )}
                 <p className="w-full text-justify whitespace-pre-line text-sm">
                   {rightPage.fullText}
                 </p>
@@ -155,17 +194,17 @@ export default function Book({ book }: BookProps) {
           />
         </div>
         <button
-            onClick={nextSpread}
-            disabled={spreadIndex === totalSpreads - 1}
-            className={`
+          onClick={nextSpread}
+          disabled={isBookFinished && spreadIndex === totalSpreads - 1}
+          className={`
             mx-4 my-auto px-4 py-2 text-xs text-slate-50
             max-h-fit rounded-2xl shadow-md 
             transistion bg-blue-600 
             hover:bg-blue-400 hover:shadow-xl
           `}
-          >
-            Next Page
-          </button>
+        >
+          Next Page
+        </button>
       </div>
     </div>
   );
