@@ -94,7 +94,7 @@ export default function Book({ book }: BookProps) {
           >
             <p 
               ref={textMeasureRef}
-              className="w-full h-full text-justify whitespace-pre-line text-md"
+              className="w-full h-full text-justify whitespace-pre-line text-sm"
             ></p>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function Book({ book }: BookProps) {
               <div className="p-8 pl-12 pb-12">
                 {(leftPage.title) && <h2 className="text-center text-2xl mb-4">{leftPage.title}</h2>}
                 {/* whitespace-pre-line preserves the line breaks in the text, keeping the original formatting */}
-                <p className="w-full text-justify whitespace-pre-line text-md">
+                <p className="w-full text-justify whitespace-pre-line text-sm">
                   {leftPage.fullText}
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function Book({ book }: BookProps) {
             >
               <div className="p-8 pr-12 pb-12">
                 {rightPage.title && <h2 className="text-center text-2xl mb-4">{rightPage.title}</h2>}
-                <p className="w-full text-justify whitespace-pre-line text-md">
+                <p className="w-full text-justify whitespace-pre-line text-sm">
                   {rightPage.fullText}
                 </p>
               </div>

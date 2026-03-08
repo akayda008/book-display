@@ -1,73 +1,112 @@
 import { Book } from "@/types/book";
 
-function fitTextIntoPage(
-  text: string,
+function fitContentIntoPage(
+  paragraphs: string[],
   title: string,
   showTitle: boolean,
-  measuredTitleHeight: HTMLHeadingElement,
-  measureTextContainerHeight: HTMLDivElement,
-  measureTextParagraphHeight: HTMLParagraphElement
+  titleHeight: HTMLHeadingElement,
+  containerHeight: HTMLDivElement,
+  paragraphHeight: HTMLParagraphElement,
 ){
-  measureTextParagraphHeight.innerText = "";
-  measuredTitleHeight.innerText = showTitle ? title:"";
+  paragraphHeight.innerText = "";
+  titleHeight.innerText = showTitle ? title : "";
 
-  const words = text.split(" ");
-  const fittedWords:string[] = [];
+  const fittedParagraphs:string[] = [];
 
-  for (const word of words){
-    fittedWords.push(word)
-    measureTextParagraphHeight.innerText = fittedWords.join(" ").trimEnd();
+  for (let i=0; i<paragraphs.length; i++){ 
+    const paragraph = paragraphs[i];
 
-    if (measureTextParagraphHeight.scrollHeight > measureTextContainerHeight.clientHeight){
-      fittedWords.pop()
-      break;
+    const candidateParagraph = [...fittedParagraphs, paragraph].join("\n\n");
+    paragraphHeight.innerText = candidateParagraph;
+
+    if (paragraphHeight.scrollHeight <= containerHeight.clientHeight){
+      fittedParagraphs.push(paragraph);
+      continue;
     }
-  }
 
-  return {
-    fittedText: fittedWords.join(" ").trimEnd(),
-    remaining: words.slice(fittedWords.length).join(" ")
+    const words = paragraph.split(" ");
+    const fittedWords:string[] = [];
+
+    for (const word of words){
+      fittedWords.push(word);
+
+      const candidateText = [...fittedParagraphs, fittedWords.join(" ")].join("\n\n");
+      paragraphHeight.innerText = candidateText;
+
+      if(paragraphHeight.scrollHeight > containerHeight.clientHeight){
+        fittedWords.pop();
+        break;
+      }
+    }
+
+    if (fittedWords.length === 0){
+      return{
+        fittedText: fittedParagraphs.join("\n\n"),
+        remainingParagraphs: paragraphs.slice(i),
+      }
+    }
+
+    const partialParagraph = fittedWords.join(" ");
+    const remainingWords = words.slice(fittedWords.length).join(" ");
+
+    fittedParagraphs.push(partialParagraph);
+
+    return{
+      fittedText: fittedParagraphs.join("\n\n"),
+      remainingParagraphs: [
+        remainingWords,
+        ...paragraphs.slice(i+1)
+      ]
+    };
   }
+  return {
+    fittedText: fittedParagraphs.join("\n\n"),
+    remainingParagraphs: []
+  };
 }
 
 export function paginateByHeight(
   chapters: Book["chapters"],
-  measuredTitleHeight: HTMLHeadingElement,
-  measureTextContainerHeight: HTMLDivElement,
-  measureTextParagraphHeight: HTMLParagraphElement
+  titleHeight: HTMLHeadingElement,
+  containerHeight: HTMLDivElement,
+  paragraphHeight: HTMLParagraphElement
 ){
   const pages = [{ id: "blank", title: "", fullText: "" }];
 
   chapters.forEach((chapter) => {
-    let remainingText = chapter.fullText;
+    let remainingParagraphs:string[] = extractIntoParagraphs(chapter.fullText);
     let isFirstPage = true;
     let pageIndex = 0;
 
-    while (remainingText.length > 0){
-      const { fittedText, remaining } = fitTextIntoPage(
-        remainingText,
+    while (remainingParagraphs.length > 0){
+      const { fittedText, remainingParagraphs:nextParagraphs } = fitContentIntoPage(
+        remainingParagraphs,
         chapter.title,
         isFirstPage,
-        measuredTitleHeight,
-        measureTextContainerHeight,
-        measureTextParagraphHeight
+        titleHeight,
+        containerHeight,
+        paragraphHeight
       );
+      
       pages.push({
-        id: chapter.id + "--page--" + pageIndex,
+        id: `${chapter.id}--page--${pageIndex}`,
         title: isFirstPage ? chapter.title : "",
         fullText: fittedText
       });
       
-      remainingText = remaining;
+      remainingParagraphs = nextParagraphs;
+      
       pageIndex ++;
       isFirstPage = false;
 
-      if (fittedText.length === 0) break;
     };
   });
   return pages;
 }
 
 export function extractIntoParagraphs(text: string):string[]{
-  return text.split("\n\n").map(p => p.trim()).filter(Boolean);
+  return text
+    .split("\n\n")
+    .map(p => p.trim())
+    .filter(Boolean);
 }
