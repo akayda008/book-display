@@ -146,7 +146,7 @@ export default function Book({ book }: BookProps) {
         </button>
         {/* Book */}
         <div className="flex flex-row w-250 h-150 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-100 relative">
-          <div className="flex h-full flex-row">
+          <div className="flex h-full w-full flex-row">
             {/* Left Page */}
             <div
               className={`
