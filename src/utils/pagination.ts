@@ -1,5 +1,37 @@
 import { Book } from "@/types/book";
 
+function findMaxWordsThatFit(
+  words: string[],
+  fittedParagraphs: string[],
+  paragraphHeight: HTMLParagraphElement,
+  containerHeight: HTMLDivElement
+): number {
+
+  let low = 0;
+  let high = words.length;
+  let bestFit = 0;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+
+    const candidate = [
+      ...fittedParagraphs,
+      words.slice(0, mid).join(" ")
+    ].join("\n\n");
+
+    paragraphHeight.textContent = candidate;
+
+    if (paragraphHeight.scrollHeight <= containerHeight.clientHeight) {
+      bestFit = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return bestFit;
+}
+
 function fitContentIntoPage(
   paragraphs: string[],
   title: string,
@@ -12,57 +44,49 @@ function fitContentIntoPage(
   titleHeight.innerText = showTitle ? title : "";
 
   const fittedParagraphs:string[] = [];
+  let remainingParagraphs:string[] = [];
 
-  for (let i=0; i<paragraphs.length; i++){ 
+  for (let i=0; i<paragraphs.length; i++){
     const paragraph = paragraphs[i];
 
     const candidateParagraph = [...fittedParagraphs, paragraph].join("\n\n");
     paragraphHeight.innerText = candidateParagraph;
 
-    if (paragraphHeight.scrollHeight <= containerHeight.clientHeight){
-      fittedParagraphs.push(paragraph);
-      continue;
-    }
+    if (paragraphHeight.scrollHeight > containerHeight.clientHeight ){
+      const words = paragraph.split(" ");
+      const maxWords = findMaxWordsThatFit(
+        words, 
+        fittedParagraphs, 
+        paragraphHeight, 
+        containerHeight
+      );
 
-    const words = paragraph.split(" ");
-    const fittedWords:string[] = [];
+      const fittedWords = words.slice(0, maxWords).join(" ");
+      const remainingWords = words.slice(maxWords).join(" ");
 
-    for (const word of words){
-      fittedWords.push(word);
-
-      const candidateText = [...fittedParagraphs, fittedWords.join(" ")].join("\n\n");
-      paragraphHeight.innerText = candidateText;
-
-      if(paragraphHeight.scrollHeight > containerHeight.clientHeight){
-        fittedWords.pop();
-        break;
+      if (fittedWords){
+        fittedParagraphs.push(fittedWords);
       }
-    }
 
-    if (fittedWords.length === 0){
+      if (fittedWords.length === 0){
+        return{
+          fittedParagraphs,
+          remainingParagraphs: paragraphs.slice(i),
+        };
+      }
+      remainingParagraphs = [remainingWords, ...paragraphs.slice(i+1)]
+
       return{
-        fittedText: fittedParagraphs.join("\n\n"),
-        remainingParagraphs: paragraphs.slice(i),
-      }
+        fittedParagraphs,
+        remainingParagraphs
+      };
     }
-
-    const partialParagraph = fittedWords.join(" ");
-    const remainingWords = words.slice(fittedWords.length).join(" ");
-
-    fittedParagraphs.push(partialParagraph);
-
-    return{
-      fittedText: fittedParagraphs.join("\n\n"),
-      remainingParagraphs: [
-        remainingWords,
-        ...paragraphs.slice(i+1)
-      ]
-    };
+    fittedParagraphs.push(paragraph);
   }
-  return {
-    fittedText: fittedParagraphs.join("\n\n"),
+  return{
+    fittedParagraphs,
     remainingParagraphs: []
-  };
+  }
 }
 
 export function paginateByHeight(
@@ -79,7 +103,7 @@ export function paginateByHeight(
     let pageIndex = 0;
 
     while (remainingParagraphs.length > 0){
-      const { fittedText, remainingParagraphs:nextParagraphs } = fitContentIntoPage(
+      const { fittedParagraphs, remainingParagraphs:nextParagraphs } = fitContentIntoPage(
         remainingParagraphs,
         chapter.title,
         isFirstPage,
@@ -91,7 +115,7 @@ export function paginateByHeight(
       pages.push({
         id: `${chapter.id}--page--${pageIndex}`,
         title: isFirstPage ? chapter.title : "",
-        fullText: fittedText
+        fullText: fittedParagraphs.join("\n\n")
       });
       
       remainingParagraphs = nextParagraphs;
