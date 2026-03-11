@@ -137,15 +137,15 @@ export default function Book({ book }: BookProps) {
           disabled={spreadIndex === 0}
           className={`
             mx-4 my-auto px-4 py-2 text-xs text-slate-50
-            max-h-fit rounded-2xl shadow-md 
-            transistion bg-blue-600 
-            hover:bg-blue-400 hover:shadow-xl
+            max-h-fit rounded-md shadow-2xs shadow-amber-50
+            transistion
+            hover:bg-emerald-800 hover:shadow-sm
           `}
         >
           Previous Page
         </button>
         {/* Book */}
-        <div className="flex flex-row w-250 h-150 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-100 relative">
+        <div className="flex flex-row w-250 h-150 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-50 relative">
           <div className="flex h-full w-full flex-row">
             {/* Left Page */}
             <div
@@ -197,10 +197,10 @@ export default function Book({ book }: BookProps) {
           onClick={nextSpread}
           disabled={isBookFinished && spreadIndex === totalSpreads - 1}
           className={`
-            mx-4 my-auto px-4 py-2 text-xs text-slate-50
-            max-h-fit rounded-2xl shadow-md 
-            transistion bg-blue-600 
-            hover:bg-blue-400 hover:shadow-xl
+            mx-4 my-auto px-4 py-2 text-xs text-white
+            max-h-fit rounded-md shadow-2xs shadow-amber-50
+            transistion
+            hover:bg-emerald-800 hover:shadow-sm
           `}
         >
           Next Page
