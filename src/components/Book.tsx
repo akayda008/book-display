@@ -17,12 +17,13 @@ type Page = {
 export default function Book({ book }: BookProps) {
   const [pages, setPages] = useState<Page[]>([]);
   const [spreadIndex, setSpreadIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
   const totalPages = pages.length;
-  const totalSpreads = Math.ceil(totalPages / 2);
+  const totalSpreads = isMobile ? totalPages : Math.ceil(totalPages / 2);
 
-  const leftPageIndex = spreadIndex * 2;
-  const rightPageIndex = leftPageIndex + 1;
+  const leftPageIndex = isMobile ? spreadIndex : spreadIndex * 2;
+  const rightPageIndex = isMobile ? spreadIndex : spreadIndex * 2 + 1;
 
   const leftPage = pages[leftPageIndex] ?? { title: "", fullText: "" };
   const rightPage = pages[rightPageIndex] ?? { title: "", fullText: "" };
@@ -106,7 +107,19 @@ export default function Book({ book }: BookProps) {
     setPages(newPages);
   }, [book]);
 
+  useEffect(() => {
+
+    function handleResize() {
+      setIsMobile(window.innerWidth < 768);
+    }
   
+    handleResize();
+  
+    window.addEventListener("resize", handleResize);
+  
+    return () => window.removeEventListener("resize", handleResize);
+  
+  }, []);
 
   return (
     <div className="relative">
@@ -114,10 +127,10 @@ export default function Book({ book }: BookProps) {
       <div
         className={`
           absolute invisible pointer-events-none 
-          w-125 h-150 mx-auto
+          w-[90vw] md:max-w-250 aspect-3/5 md:aspect-5/3 h-full mx-auto
         `}
       >
-        <div className="w-full h-full p-8 pb-12 pl-12 flex flex-col">
+        <div className="w-full h-full p-4 md:p-6 lg:p-8 pb-8 md:pl-12 flex flex-col">
           <h2
             ref={titleMeasureRef}
             className="text-center text-2xl mb-4 empty:hidden"
@@ -125,18 +138,18 @@ export default function Book({ book }: BookProps) {
           <div ref={textContainerRef} className="overflow-hidden">
             <p
               ref={textMeasureRef}
-              className="w-full h-full text-justify whitespace-pre-line text-sm"
+              className="w-full h-full text-justify whitespace-pre-line text-xs md:text-sm lg:text-sm"
             ></p>
           </div>
         </div>
       </div>
-      <div className="flex flex-row">
+      <div className="flex flex-col md:flex-row items-center">
         {/* Previous button */}
         <button
           onClick={previousSpread}
           disabled={spreadIndex === 0}
           className={`
-            mx-4 my-auto px-4 py-2 text-xs text-slate-50
+            m-2 md:mx-4 px-4 py-2 text-xs text-slate-50
             max-h-fit rounded-md shadow-2xs shadow-amber-50
             transistion
             hover:bg-emerald-800 hover:shadow-sm
@@ -145,23 +158,23 @@ export default function Book({ book }: BookProps) {
           Previous Page
         </button>
         {/* Book */}
-        <div className="flex flex-row w-250 h-150 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-50 relative">
+        <div className="flex flex-row w-[90vw] md:max-w-250 aspect-3/5 md:aspect-5/3 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-50 relative">
           <div className="flex h-full w-full flex-row">
             {/* Left Page */}
             <div
               className={`
-              flex-1 overflow-hidden text-black 
+              hidden md:block flex-1 overflow-hidden text-black 
               bg-linear-to-r from-black/10 to-transparent 
             `}
             >
-              <div className="p-8 pl-12 pb-12">
+              <div className="p-4 md:p-6 lg:p-8 md:pl-12 pb-8">
                 {leftPage.title && (
                   <h2 className="text-center text-2xl mb-4">
                     {leftPage.title}
                   </h2>
                 )}
                 {/* whitespace-pre-line preserves the line breaks in the text, keeping the original formatting */}
-                <p className="w-full text-justify whitespace-pre-line text-sm">
+                <p className="w-full text-justify whitespace-pre-line text-xs md:text-sm lg:text-sm">
                   {leftPage.fullText}
                 </p>
               </div>
@@ -170,17 +183,17 @@ export default function Book({ book }: BookProps) {
             {/* Right Page */}
             <div
               className={`
-              flex-1 overflow-hidden text-black border-l
+              w-full md:flex-1 overflow-hidden text-black border-l
               bg-linear-to-l from-black/10 to-transparent 
             `}
             >
-              <div className="p-8 pr-12 pb-12">
+              <div className="p-4 md:p-6 lg:p-8 md:pr-12 pb-8">
                 {rightPage.title && (
                   <h2 className="text-center text-2xl mb-4">
                     {rightPage.title}
                   </h2>
                 )}
-                <p className="w-full text-justify whitespace-pre-line text-sm">
+                <p className="w-full text-justify whitespace-pre-line text-xs md:text-sm lg:text-sm">
                   {rightPage.fullText}
                 </p>
               </div>
@@ -197,7 +210,7 @@ export default function Book({ book }: BookProps) {
           onClick={nextSpread}
           disabled={isBookFinished && spreadIndex === totalSpreads - 1}
           className={`
-            mx-4 my-auto px-4 py-2 text-xs text-white
+            m-2 md:mx-4 my-auto px-4 py-2 text-xs text-white
             max-h-fit rounded-md shadow-2xs shadow-amber-50
             transistion
             hover:bg-emerald-800 hover:shadow-sm
