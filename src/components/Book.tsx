@@ -16,21 +16,18 @@ type Page = {
 
 export default function Book({ book }: BookProps) {
   const [pages, setPages] = useState<Page[]>([]);
-  const [spreadIndex, setSpreadIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [layoutVersion, setLayoutVersion] = useState(0);
 
   const totalPages = pages.length;
-  const totalSpreads = isMobile ? totalPages : Math.ceil(totalPages / 2);
 
-  const leftPageIndex = isMobile ? spreadIndex : spreadIndex * 2;
-  const rightPageIndex = isMobile ? spreadIndex : spreadIndex * 2 + 1;
+  const pagesPerView = isMobile ? 1 : 2;
 
-  const leftPage = pages[leftPageIndex] ?? { title: "", fullText: "" };
-  const rightPage = pages[rightPageIndex] ?? { title: "", fullText: "" };
+  const leftPage = pages[currentPage] ?? { title: "", fullText: "" };
+  const rightPage = pages[currentPage + 1] ?? { title: "", fullText: "" };
 
   function nextSpread() {
-
-    const nextSpreadIndex = spreadIndex + 1;
   
     const textContainer = textContainerRef.current;
     const textMeasure = textMeasureRef.current;
@@ -41,7 +38,7 @@ export default function Book({ book }: BookProps) {
     const newPages = [...pages];
   
     // how many pages we want loaded
-    const targetPages = (nextSpreadIndex + 3) * 2;
+    const targetPages = currentPage + (pagesPerView * 3);
   
     while (newPages.length < targetPages) {
   
@@ -59,13 +56,28 @@ export default function Book({ book }: BookProps) {
     }
   
     setPages(newPages);
-    setSpreadIndex(nextSpreadIndex);
+    setCurrentPage(p => p + pagesPerView);
   }
 
   function previousSpread() {
-    if (spreadIndex > 0) {
-      setSpreadIndex((prev) => prev - 1);
+    if (currentPage > 0) {
+      setCurrentPage(p => Math.max(0, p - pagesPerView))
     }
+  }
+
+  function handleResize() {
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    setLayoutVersion(v => v + 1);
+  }
+
+  function resetPaginationState() {
+    paginationStateRef.current = {
+      chapterIndex: 0,
+      pageIndex: 0,
+      remainingParagraphs: [],
+      isFirstPage: true,
+    };
   }
 
   const titleMeasureRef = useRef<HTMLHeadingElement | null>(null);
@@ -91,7 +103,9 @@ export default function Book({ book }: BookProps) {
       { id: "blank", title: "", fullText: "" }
     ];
 
-    for (let i = 0; i < 5; i++) {
+    resetPaginationState();
+
+    for (let i = 0; i < 3; i++) {
       const page = generateNextPage(
         book.chapters,
         paginationStateRef.current,
@@ -105,20 +119,12 @@ export default function Book({ book }: BookProps) {
       newPages.push(page);
     }
     setPages(newPages);
-  }, [book]);
+  }, [book, layoutVersion]);
 
   useEffect(() => {
-
-    function handleResize() {
-      setIsMobile(window.innerWidth < 768);
-    }
-  
     handleResize();
-  
     window.addEventListener("resize", handleResize);
-  
     return () => window.removeEventListener("resize", handleResize);
-  
   }, []);
 
   return (
@@ -130,7 +136,7 @@ export default function Book({ book }: BookProps) {
           w-[90vw] md:max-w-250 aspect-3/5 md:aspect-5/3 h-full mx-auto
         `}
       >
-        <div className="w-full h-full p-4 md:p-6 lg:p-8 pb-8 md:pl-12 flex flex-col">
+        <div className="w-full h-full p-4 md:p-6 lg:p-8 pb-10 md:pl-12 flex flex-col">
           <h2
             ref={titleMeasureRef}
             className="text-center text-2xl mb-4 empty:hidden"
@@ -147,7 +153,7 @@ export default function Book({ book }: BookProps) {
         {/* Previous button */}
         <button
           onClick={previousSpread}
-          disabled={spreadIndex === 0}
+          disabled={currentPage === 0}
           className={`
             m-2 md:mx-4 px-4 py-2 text-xs text-slate-50
             max-h-fit rounded-md shadow-2xs shadow-amber-50
@@ -167,7 +173,7 @@ export default function Book({ book }: BookProps) {
               bg-linear-to-r from-black/10 to-transparent 
             `}
             >
-              <div className="p-4 md:p-6 lg:p-8 md:pl-12 pb-8">
+              <div className="p-4 pb-10 md:p-6 lg:p-8 md:pl-12">
                 {leftPage.title && (
                   <h2 className="text-center text-2xl mb-4">
                     {leftPage.title}
@@ -187,7 +193,7 @@ export default function Book({ book }: BookProps) {
               bg-linear-to-l from-black/10 to-transparent 
             `}
             >
-              <div className="p-4 md:p-6 lg:p-8 md:pr-12 pb-8">
+              <div className="p-4 pb-10 md:p-6 lg:p-8 md:pr-12">
                 {rightPage.title && (
                   <h2 className="text-center text-2xl mb-4">
                     {rightPage.title}
@@ -208,7 +214,7 @@ export default function Book({ book }: BookProps) {
         </div>
         <button
           onClick={nextSpread}
-          disabled={isBookFinished && spreadIndex === totalSpreads - 1}
+          disabled={isBookFinished && currentPage + pagesPerView === totalPages }
           className={`
             m-2 md:mx-4 my-auto px-4 py-2 text-xs text-white
             max-h-fit rounded-md shadow-2xs shadow-amber-50

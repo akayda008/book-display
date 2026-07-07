@@ -67,7 +67,7 @@ function fitContentIntoPage(
     paragraphHeight.innerText = candidateParagraph;
 
     if (paragraphHeight.scrollHeight > containerHeight.clientHeight ){
-      const words = paragraph.split(" ");
+      const words = paragraph.split(/\s+/);
       const maxWords = findMaxWordsThatFit(
         words, 
         fittedParagraphs, 
