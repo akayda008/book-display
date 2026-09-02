@@ -5,6 +5,21 @@ This project is pre-implementation for Planning Cycle 1 — most "debt" here is 
 
 ## Current Technical Debt
 
+### Shelf-to-reader transition is a plain cover/reveal, not a true shared-element morph
+**Problem:**
+The shelf-to-reader Motion transition (Sub-project 4) is a full-viewport overlay that scales/translates via `transform` from the clicked card's position — a fixed after Sub-project 4's corrective round 1 removed layout-thrashing `width`/`height`/`top`/`left` animation. It approximates "card grows into open book" but isn't a true DOM-measured shared-element animation (Next.js unmounts the shelf route's tree on navigation, so the card and the reader frame are never actually the same animated element), and the user felt it still wasn't fully satisfying even after the smoothness fix.
+
+**Impact:**
+Cosmetic only — doesn't block reading or navigation, and correctly respects `prefers-reduced-motion`. The user has explicitly deferred refining it further.
+
+**Possible Solution:**
+Revisit once the illustrated shelf artwork / literal "grab the spine and pull it out" gesture (Future Ideas) is actually built — GSAP was already flagged in ADR-003 as the likely tool for that more choreographed version, and it may be worth re-evaluating the transition mechanism at the same time rather than polishing the current generic cover/reveal in isolation.
+
+**Priority:**
+- Low (cosmetic, explicitly deferred by the user)
+
+---
+
 ### Dead code in the pagination engine
 **Problem:**
 `utils/pagination.ts` has a commented-out `paginateByHeight` function left in from an earlier approach.

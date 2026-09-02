@@ -1,5 +1,6 @@
 export type Chapter = {
     id: string;
+    slug: string;
     title: string;
     fullText: string
 }
@@ -10,6 +11,7 @@ export type BookContent =
 
 export type Book = {
     id: string;
+    slug: string;
     title: string;
     author:string;
     blurb: string;

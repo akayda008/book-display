@@ -2,6 +2,7 @@ import { Chapter, Book } from "@/types/book";
 
 const chapter1: Chapter = {
   id: "short_story1",
+  slug: "the-razor-sharp-heirloom",
   title: "The Razor-sharp Heirloom",
   fullText: `
   An heirloom is something that is passed down generations in a family, a valuable piece of ancestry. Normally, it is a worn out discoloured painting, a vintage wrist-watch, or some kind of furniture repaired a thousand times to keep it from falling apart. This is a story of one such heirloom; a kitchen knife.
@@ -20,6 +21,7 @@ const chapter1: Chapter = {
 
 const chapter2: Chapter = {
   id: "short_story2",
+  slug: "riches-to-rags",
   title: "Riches to Rags",
   fullText: `
   I remember my time in heaven, prancing around with everyone and laughing our hearts out. One fine day I was told that I am chosen to bring joy to the people down below, I was honoured to say the least.
@@ -44,6 +46,7 @@ const chapter2: Chapter = {
 
 const chapter3: Chapter = {
   id: "short_story3",
+  slug: "growing-into-myself",
   title: "Growing Into Myself",
   fullText: `
   My cousin is one of the prettiest people I know, and this is including celebrities and models. I have always seen people throwing themselves at her, always being at her service. I am also good looking, yes, but I have always been in her shadow.
@@ -64,6 +67,7 @@ const chapter3: Chapter = {
 
 const chapter4: Chapter = {
   id: "short_story4",
+  slug: "the-magical-stone-of-tigers",
   title: "The Magical Stone of Tigers",
   fullText: `
   Long time ago, a girl named Geetika lived in a village near a forest. Like everyone in the village, she went to take a bath in the nearby river. On her way back, she saw a glimmer at some distance. It was a stone, bright orange in colour with a black line in the centre. It was the most beautiful thing Geethika had ever seen and it reminded her of a royal, majestic beast, Tiger. She thought to herself how wonderful it would be to live as a tiger.
@@ -104,6 +108,7 @@ const chapter4: Chapter = {
 
 const chapter5: Chapter = {
   id: "poem1",
+  slug: "what-love-is",
   title: "What Love is?",
   fullText: `
   |As I walk down the road
@@ -236,6 +241,7 @@ const chapter5: Chapter = {
 
 const chapter6: Chapter = {
   id: "poem2",
+  slug: "the-past-and-the-present",
   title: "The Past and the Present",
   fullText: `
   |I woke up in the morning
@@ -302,6 +308,7 @@ const chapter6: Chapter = {
 
 const chapter7: Chapter = {
   id: "poem3",
+  slug: "sleep",
   title: "Sleep",
   fullText: `
   |I stay up the whole night
@@ -333,6 +340,7 @@ const chapter7: Chapter = {
 
   const chapter8: Chapter = {
     id: "poem4",
+    slug: "life-in-pandemic",
     title: "Life in Pandemic",
     fullText: `
   |It all started when it was time
@@ -374,6 +382,7 @@ const chapter7: Chapter = {
 
 const chapter9: Chapter = {
   id: "poem5",
+  slug: "choose-darkness-over-light",
   title: "Choose Darkness over Light",
   fullText: `
   |Please fall for the darkness, not the light
@@ -390,6 +399,7 @@ const chapter9: Chapter = {
 
 const chapter10: Chapter = {
   id: "poem6",
+  slug: "moon-in-the-blue-sky",
   title: "Moon in the Blue Sky",
   fullText: `
   |I peek at our memories,
@@ -401,6 +411,7 @@ const chapter10: Chapter = {
 
 const chapter11: Chapter = {
   id: "philosophy1",
+  slug: "eyes-tell-the-truth",
   title: "Eyes Tell the Truth",
   fullText: `
   I believe and have known that eyes always tell the truth.
@@ -413,6 +424,7 @@ const chapter11: Chapter = {
 
 const chapter12: Chapter = {
   id: "philosophy2",
+  slug: "existence-of-god",
   title: "Existence of God",
   fullText: `
   I do not believe in God. One could call me an atheist, but he would be wrong too. I will elaborate on this statement in the following passage.
@@ -441,6 +453,7 @@ const chapter12: Chapter = {
 
 const chapterTestFormatting: Chapter = {
   id: "test_formatting",
+  slug: "formatting-test-chapter",
   title: "Formatting Test Chapter",
   fullText: `
   ## A Sub-heading
@@ -462,6 +475,7 @@ const chapterTestFormatting: Chapter = {
 
 const chapterTestList: Chapter = {
   id: "test_list",
+  slug: "long-list-test-chapter",
   title: "Long List Test Chapter",
   fullText: `
   ${Array.from({ length: 30 }, (_, i) => `- List item number ${i + 1}, long enough on its own to add real height to the page.`).join("\n  ")}
@@ -470,6 +484,7 @@ const chapterTestList: Chapter = {
 
 const chapterTestBlockquote: Chapter = {
   id: "test_blockquote",
+  slug: "long-blockquote-test-chapter",
   title: "Long Blockquote Test Chapter",
   fullText: `
   ${Array.from({ length: 25 }, (_, i) => `> Blockquote line number ${i + 1}, also long enough on its own to add real height to the page.`).join("\n  ")}
@@ -478,6 +493,7 @@ const chapterTestBlockquote: Chapter = {
 
 export const book1: Book = {
   id: "book1",
+  slug: "my-work",
   title: "My Work",
   author: "J Akaash",
   blurb:
@@ -506,15 +522,12 @@ export const book1: Book = {
   },
 };
 
-// Temporary fixture for manually verifying Sub-project 3 (pages-type content).
-// No shelf/routing exists yet to pick between books (Sub-project 4) - reached via
-// the `?pages=1` query param on `/`, see src/app/page.tsx. Remove once a real
-// pages-type book (or Sub-project 4's routing) makes this unnecessary.
-export const pagesTestBook: Book = {
+export const pagesBook: Book = {
   id: "pages-test-book",
-  title: "Pages Test Book",
-  author: "Sub-project 3 fixture",
-  blurb: "A temporary pages-type fixture for manually verifying image-page rendering.",
+  slug: "sketchbook-pages",
+  title: "Sketchbook Pages",
+  author: "J Akaash",
+  blurb: "A pages-type book: pre-converted page images rendered 1:1, no text formatting.",
   aboutAuthor: "N/A",
   content: {
     type: "pages",
@@ -529,3 +542,45 @@ export const pagesTestBook: Book = {
     ],
   },
 };
+
+/** The full library the shelf iterates and routing resolves slugs against. */
+export const books: Book[] = [book1, pagesBook];
+
+/**
+ * Dev-time-only check (see markdown.ts's unclosed-fence warning for the same
+ * pattern): a duplicate slug produces a silently ambiguous route (whichever
+ * book/chapter happens to match first "wins"), so this fails loudly instead.
+ */
+function validateLibrary(library: Book[]) {
+  if (typeof console === "undefined") return;
+
+  const seenBookSlugs = new Set<string>();
+  for (const book of library) {
+    if (seenBookSlugs.has(book.slug)) {
+      console.warn(`[book-display] Duplicate book slug "${book.slug}" — one of these books is unreachable by URL.`);
+    }
+    seenBookSlugs.add(book.slug);
+
+    if (book.content.type !== "text") continue;
+    const seenChapterSlugs = new Set<string>();
+    for (const chapter of book.content.chapters) {
+      if (seenChapterSlugs.has(chapter.slug)) {
+        console.warn(
+          `[book-display] Duplicate chapter slug "${chapter.slug}" in book "${book.slug}" — one of these chapters is unreachable by URL.`
+        );
+      }
+      seenChapterSlugs.add(chapter.slug);
+    }
+  }
+}
+
+validateLibrary(books);
+
+export function getBookBySlug(slug: string): Book | undefined {
+  return books.find((book) => book.slug === slug);
+}
+
+export function getChapterBySlug(book: Book, slug: string): Chapter | undefined {
+  if (book.content.type !== "text") return undefined;
+  return book.content.chapters.find((chapter) => chapter.slug === slug);
+}
