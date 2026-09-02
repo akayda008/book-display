@@ -3,7 +3,7 @@
 ## Current Version
 
 - Version: v0 (pre-release)
-- Status: implementation in progress — Sub-project 1 of 5 complete
+- Status: implementation in progress — Sub-project 2 of 5 complete
 - Released on: not yet released
 
 ## Current Phase
@@ -16,20 +16,14 @@ Implementing the sub-projects designed in Planning Cycle 1, in dependency order 
 
 ### Goal
 
-Sub-project 2: Page-turn animation (click-triggered, custom CSS 3D transforms).
+Sub-project 3: PDF import / image-only pages (unified `pages`-type content model, pre-rendered images, reuses the page-turn animation unchanged).
 
 ### Planned Work
 
-- Desktop two-page spine-flip mechanic (advance-by-2, front/back page reveal)
-- Mobile single-page 360° spin mechanic (advance-by-1)
-- Always-buffered page generation (no mid-flip content wait)
-- `prefers-reduced-motion` support
-- Inert buttons during an in-progress animation
-- Fold in the two deferred layout fixes from Sub-project 1 (see Technical Debts.md): the book frame's medium-viewport (768px-1200px) gap, and the stacked Previous/Next buttons on mobile — both land naturally here since this milestone already reworks the frame's layout/geometry.
+- To be scoped at dispatch time.
 
 ## Upcoming Milestones
 
-- Sub-project 3: PDF import / image-only pages (unified `pages`-type content model, pre-rendered images, reuses the page-turn animation unchanged)
 - Sub-project 4: Library/shelf view (`/[bookSlug]/[chapterSlug]` routing, explicit `slug` fields, Motion-based opening/closing transition)
 - Sub-project 5: Reading preferences (font size, app-chrome-only theme, saved reading position, single/two-page toggle) — includes fixing the pre-existing resize/repagination position-loss bug
 
@@ -45,6 +39,24 @@ Deferred, not rejected — may or may not get picked up later:
 - Inline images mixed into flowing text — currently believed unnecessary now that PDF/image-only pages and markdown text cover the format space between them; revisit only if a real case emerges that neither covers
 
 ## Completed Milestones
+
+### Sub-project 2: Page-turn animation (2026-09-02)
+
+Added click-triggered CSS 3D page-turn animation: desktop two-page spine-flip and mobile/tablet single-page spine-hinge flip, with buffered page generation, `prefers-reduced-motion` support, and inert buttons during an in-progress animation.
+
+- [x] Desktop two-page spine-flip mechanic, non-overlapping advance-by-2 (1-2, 3-4, 5-6, ...)
+- [x] Mobile/tablet single-page spine-hinge flip (Next hinges/reveals from the left edge; Previous uses its own distinct animation arriving from the left, rather than a reversed Next)
+- [x] Always-buffered page generation (no mid-flip content wait)
+- [x] `prefers-reduced-motion` support (instant swap, no animation)
+- [x] Inert Previous/Next buttons during an in-progress animation
+- [x] Fixed the book frame's medium-viewport (768px-1200px) gap and the stacked mobile Previous/Next buttons (both carried over from Sub-project 1, see Technical Debts.md)
+
+Design changes made during manual verification, beyond the original scope:
+- Moved the single-page/two-page breakpoint from 768px to 1200px, so tablet-sized viewports get the single-page view rather than the two-page spread.
+- Moved Previous/Next to sit centered under the book instead of flanking it left/right.
+- Reworked frame sizing to scale to fill available viewport space (width and height budgets together) instead of a fixed/capped size, fixing both the desktop-oversized-empty-space and mobile-edge-to-edge issues, and fixing centering at wide viewports.
+
+Corrective testing rounds surfaced and fixed two real pre-existing-shape bugs (logged in `MISTAKES.md`): an off-by-one in the buffer-sufficiency check that let an animation start before its target page was actually buffered (visible as a blank page after a mobile flip), and a mismatched back-face content formula on the desktop leaf's Previous direction (visible as a flash of wrong content right as a Previous flip landed).
 
 ### Sub-project 1: Rich text formatting (2026-09-01)
 
