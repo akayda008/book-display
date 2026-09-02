@@ -3,7 +3,7 @@
 ## Current Version
 
 - Version: v0 (pre-release)
-- Status: implementation in progress — Sub-project 3 of 5 complete
+- Status: implementation in progress — Sub-project 4 of 5 complete
 - Released on: not yet released
 
 ## Current Phase
@@ -16,20 +16,14 @@ Implementing the sub-projects designed in Planning Cycle 1, in dependency order 
 
 ### Goal
 
-Sub-project 4: Library/shelf view (`/[bookSlug]/[chapterSlug]` routing, explicit `slug` fields, Motion-based opening/closing transition).
+Sub-project 5: Reading preferences (font size, app-chrome-only theme, saved reading position, single/two-page toggle) — includes fixing the pre-existing resize/repagination position-loss bug.
 
 ### Planned Work
 
-- Add explicit `slug` fields to `Book` and `Chapter` (ADR-006), separate from `id`; dev-time duplicate-slug validation at both levels
-- Shelf page (`/`): grid of book cards (title/author/blurb, text-only) built from an actual library/list of books, not a single hardcoded one
-- Reader route `/[bookSlug]/[chapterSlug]`; book-only URL `/[bookSlug]` redirects to the first chapter (saved-position resume is Sub-project 5's scope, not this one)
-- Unknown book/chapter slug → standard Next.js 404
-- Motion-based generic "card grows into open book" shared-element transition, shelf → reader and reversed on reader → shelf; persistent back-to-shelf link in the reader
-- Retire the Sub-project 3 temporary `/?pages=1` test-fixture switch now that real routing exists — the pages-type fixture book becomes a real, reachable second shelf entry
+- To be scoped at dispatch time.
 
 ## Upcoming Milestones
 
-- Sub-project 5: Reading preferences (font size, app-chrome-only theme, saved reading position, single/two-page toggle) — includes fixing the pre-existing resize/repagination position-loss bug
 
 ## Future Ideas
 
@@ -43,6 +37,23 @@ Deferred, not rejected — may or may not get picked up later:
 - Inline images mixed into flowing text — currently believed unnecessary now that PDF/image-only pages and markdown text cover the format space between them; revisit only if a real case emerges that neither covers
 
 ## Completed Milestones
+
+### Sub-project 4: Library/shelf view (2026-09-02)
+
+Added a real multi-book library and routing: explicit hand-set `slug` fields on `Book`/`Chapter` (ADR-006, separate from `id`), a books registry with lookups and a dev-time duplicate-slug validator, a shelf page listing all books, and `/[bookSlug]/[chapterSlug]` reader routes (`/[bookSlug]` redirects to the first chapter for text books, or renders directly for the chapterless pages-type book). Unknown slugs 404. The Sub-project 3 `pagesTestBook` fixture is now a real permanent second book ("Sketchbook Pages").
+
+- [x] `slug` fields on `Book`/`Chapter` (ADR-006), dev-time duplicate-slug validation
+- [x] Shelf page (`/`) from a real multi-book list
+- [x] `/[bookSlug]/[chapterSlug]` routing; `/[bookSlug]` redirects appropriately per content type
+- [x] Unknown book/chapter slug → standard 404
+- [x] Motion-based (ADR-003) generic "card grows into book" shelf-to-reader transition, reversed by a persistent back-to-shelf link; respects `prefers-reduced-motion`
+- [x] Retired the Sub-project 3 temporary `/?pages=1` switch
+
+Also added, beyond the original scope, as real gaps found during manual verification: the URL now tracks the current chapter via `router.replace` as the reader pages across a chapter boundary (history-only, no re-fetch or transition replay).
+
+Corrective testing fixed two real bugs (logged in `MISTAKES.md`): the shelf-to-reader transition originally animated `width`/`height`/`top`/`left` instead of `transform`, causing visible jank; and a leftover Sub-project 3 counter-margin was unconditionally canceling the spine-side gutter for image-kind pages, misaligning "Sketchbook Pages"' two-page view relative to how text pages already gutter.
+
+The transition itself is left as a generic cover/reveal rather than a true shared-element morph (Next.js unmounts the shelf route on navigation) — the user found it acceptable but not fully satisfying even after the smoothness fix, and explicitly deferred further polish; logged as low-priority technical debt, to revisit alongside the illustrated shelf-art gesture (see Technical Debts.md, Future Ideas).
 
 ### Sub-project 3: PDF import / image-only pages (2026-09-02)
 
