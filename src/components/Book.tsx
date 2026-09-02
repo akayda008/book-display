@@ -7,6 +7,10 @@ import { createPaginationState, generateNextPage } from "../utils/pagination";
 
 type BookProps = {
   book: BookType;
+  /** Internal chapter `id` (not `slug`) to open directly to, for a chapter deep-link. Text books only. */
+  initialChapterId?: string;
+  /** Fires (possibly repeatedly with the same id) whenever the currently-displayed chapter's `id` is known. Text books only. */
+  onChapterChange?: (chapterId: string) => void;
 };
 
 type Page =
@@ -34,7 +38,7 @@ const framePagePadding = "p-8";
 const pageTextSize = "text-sm";
 const frameGap = "gap-4";
 
-export default function Book({ book }: BookProps) {
+export default function Book({ book, initialChapterId, onChapterChange }: BookProps) {
   const isPagesBook = book.content.type === "pages";
 
   const [pages, setPages] = useState<Page[]>([]);
@@ -83,6 +87,19 @@ export default function Book({ book }: BookProps) {
   useEffect(() => {
     isAnimatingRef.current = isAnimating;
   }, [isAnimating]);
+
+  // Keeps the caller (the chapter route) informed of which chapter is
+  // actually on screen, so it can shallow-update the URL as the reader
+  // flips across a chapter boundary - a page id is `${chapterId}--page--N`,
+  // so the prefix before "--page--" is the chapter id. Falls back to the
+  // right page when the left is blank (only ever true at the very start of
+  // the book).
+  useEffect(() => {
+    if (book.content.type !== "text" || !onChapterChange) return;
+    const page = leftPage.kind === "text" ? leftPage : rightPage;
+    if (page.kind !== "text") return;
+    onChapterChange(page.id.split("--page--")[0]);
+  }, [leftPage, rightPage, book.content.type, onChapterChange]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -236,7 +253,16 @@ export default function Book({ book }: BookProps) {
 
     resetPaginationState();
 
-    for (let i = 0; i < 3; i++) {
+    // Deep-linking to a chapter can't jump straight there - the pagination
+    // engine only knows page boundaries by generating sequentially from the
+    // book's start (see Architecture: Known Limitations) - so buffer forward
+    // until the target chapter's first page turns up, plus a few pages past
+    // it to match the normal look-ahead. A safety cap guards against an
+    // infinite loop if the chapter id is somehow never produced.
+    let targetIndex: number | null = null;
+    const MAX_PAGES = 2000;
+
+    while (newPages.length < MAX_PAGES) {
       const page = generateNextPage(
         book.content.chapters,
         paginationStateRef.current,
@@ -246,10 +272,23 @@ export default function Book({ book }: BookProps) {
       );
       if (!page) break;
       newPages.push({ kind: "text", ...page });
+
+      if (initialChapterId && targetIndex === null && page.id === `${initialChapterId}--page--0`) {
+        targetIndex = newPages.length - 1;
+      }
+
+      if (!initialChapterId) {
+        if (newPages.length >= 4) break;
+      } else if (targetIndex !== null && newPages.length >= targetIndex + 1 + 3) {
+        break;
+      }
     }
+
     setPages(newPages);
-    setCurrentPage(0);
-  }, [book, layoutVersion]);
+    setCurrentPage(
+      targetIndex !== null ? targetIndex - (targetIndex % pagesPerView) : 0
+    );
+  }, [book, layoutVersion, initialChapterId, pagesPerView]);
 
   useEffect(() => {
     handleResize();
@@ -345,17 +384,17 @@ export default function Book({ book }: BookProps) {
     return <h2 className="text-center text-2xl mb-4">{page.title}</h2>;
   }
 
-  // Image pages have no "spine gutter" concept the way formatted text does -
-  // in true two-page mode they should still sit centered in their page slot
-  // rather than nudged aside by the text-oriented gutter (gutterPad above).
-  // No counter-margin is needed in single-page mode any more: gutterPad
-  // already emits nothing there, for text and images alike.
-  function gutterCounterClass(side: "left" | "right") {
-    if (isMobile) return "";
-    return side === "left" ? "-ml-12" : "-mr-12";
-  }
-
-  function renderPageBody(page: Page, gutterSide: "left" | "right") {
+  // Image pages sit in the same padded/guttered slot as text pages -
+  // gutterPad on the parent wrapper already pushes the empty space toward
+  // the spine for both, so there's no separate gutter handling needed here
+  // any more. A previous round applied a counter-margin here to cancel that
+  // gutter for images specifically, on the reasoning that images "have no
+  // spine gutter concept" - in practice that made the two page slots look
+  // inconsistently aligned against each other in two-page mode (the empty
+  // space sat on the outer edge for images, but the spine side for text),
+  // which is what verification actually flagged. Removed so image pages
+  // gutter exactly like text pages.
+  function renderPageBody(page: Page) {
     if (page.kind === "text") {
       return (
         <div
@@ -368,14 +407,14 @@ export default function Book({ book }: BookProps) {
       if (brokenPages.has(page.id)) {
         return (
           <div
-            className={`flex-1 min-h-0 w-full flex items-center justify-center text-black/40 ${pageTextSize} italic ${gutterCounterClass(gutterSide)}`}
+            className={`flex-1 min-h-0 w-full flex items-center justify-center text-black/40 ${pageTextSize} italic`}
           >
             Page unavailable
           </div>
         );
       }
       return (
-        <div className={`relative flex-1 min-h-0 w-full ${gutterCounterClass(gutterSide)}`}>
+        <div className="relative flex-1 min-h-0 w-full">
           <Image
             src={page.src}
             alt=""
@@ -421,7 +460,7 @@ export default function Book({ book }: BookProps) {
             >
               <div className={`${framePagePadding} ${gutterPad("left")} flex flex-col h-full`}>
                 {renderPageTitle(baseLeftPage)}
-                {renderPageBody(baseLeftPage, "left")}
+                {renderPageBody(baseLeftPage)}
               </div>
             </div>
 
@@ -429,7 +468,7 @@ export default function Book({ book }: BookProps) {
             <div className="w-full md:flex-1 overflow-hidden text-black border-l bg-linear-to-l from-black/10 to-transparent">
               <div className={`${framePagePadding} ${gutterPad("right")} flex flex-col h-full`}>
                 {renderPageTitle(baseRightPage)}
-                {renderPageBody(baseRightPage, "right")}
+                {renderPageBody(baseRightPage)}
               </div>
             </div>
           </div>
@@ -455,7 +494,7 @@ export default function Book({ book }: BookProps) {
               >
                 <div className={`${framePagePadding} ${leafFrontPad} flex flex-col h-full`}>
                   {renderPageTitle(leafFront)}
-                  {renderPageBody(leafFront, leafFrontSide)}
+                  {renderPageBody(leafFront)}
                 </div>
               </div>
 
@@ -470,7 +509,7 @@ export default function Book({ book }: BookProps) {
                 >
                   <div className={`${framePagePadding} ${leafBackPad} flex flex-col h-full`}>
                     {renderPageTitle(leafBack)}
-                    {renderPageBody(leafBack, leafBackSide)}
+                    {renderPageBody(leafBack)}
                   </div>
                 </div>
               )}

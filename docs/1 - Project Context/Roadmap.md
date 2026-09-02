@@ -20,7 +20,12 @@ Sub-project 4: Library/shelf view (`/[bookSlug]/[chapterSlug]` routing, explicit
 
 ### Planned Work
 
-- To be scoped at dispatch time.
+- Add explicit `slug` fields to `Book` and `Chapter` (ADR-006), separate from `id`; dev-time duplicate-slug validation at both levels
+- Shelf page (`/`): grid of book cards (title/author/blurb, text-only) built from an actual library/list of books, not a single hardcoded one
+- Reader route `/[bookSlug]/[chapterSlug]`; book-only URL `/[bookSlug]` redirects to the first chapter (saved-position resume is Sub-project 5's scope, not this one)
+- Unknown book/chapter slug → standard Next.js 404
+- Motion-based generic "card grows into open book" shared-element transition, shelf → reader and reversed on reader → shelf; persistent back-to-shelf link in the reader
+- Retire the Sub-project 3 temporary `/?pages=1` test-fixture switch now that real routing exists — the pages-type fixture book becomes a real, reachable second shelf entry
 
 ## Upcoming Milestones
 
