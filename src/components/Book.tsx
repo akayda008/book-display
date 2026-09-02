@@ -2,7 +2,7 @@
 
 import { Book as BookType } from "@/types/book";
 import { useEffect, useRef, useState } from "react";
-import { generateNextPage } from "../utils/pagination";
+import { createPaginationState, generateNextPage } from "../utils/pagination";
 
 type BookProps = {
   book: BookType;
@@ -11,7 +11,7 @@ type BookProps = {
 type Page = {
   id: string;
   title: string;
-  fullText: string;
+  html: string;
 };
 
 export default function Book({ book }: BookProps) {
@@ -24,8 +24,8 @@ export default function Book({ book }: BookProps) {
 
   const pagesPerView = isMobile ? 1 : 2;
 
-  const leftPage = pages[currentPage] ?? { title: "", fullText: "" };
-  const rightPage = pages[currentPage + 1] ?? { title: "", fullText: "" };
+  const leftPage = pages[currentPage] ?? { title: "", html: "" };
+  const rightPage = pages[currentPage + 1] ?? { title: "", html: "" };
 
   function nextSpread() {
   
@@ -41,7 +41,7 @@ export default function Book({ book }: BookProps) {
     const targetPages = currentPage + (pagesPerView * 3);
   
     while (newPages.length < targetPages) {
-  
+
       const page = generateNextPage(
         book.chapters,
         paginationStateRef.current,
@@ -49,12 +49,12 @@ export default function Book({ book }: BookProps) {
         textContainer,
         textMeasure
       );
-  
+
       if (!page) break;
-  
+
       newPages.push(page);
     }
-  
+
     setPages(newPages);
     setCurrentPage(p => p + pagesPerView);
   }
@@ -72,23 +72,13 @@ export default function Book({ book }: BookProps) {
   }
 
   function resetPaginationState() {
-    paginationStateRef.current = {
-      chapterIndex: 0,
-      pageIndex: 0,
-      remainingParagraphs: [],
-      isFirstPage: true,
-    };
+    paginationStateRef.current = createPaginationState();
   }
 
   const titleMeasureRef = useRef<HTMLHeadingElement | null>(null);
   const textContainerRef = useRef<HTMLDivElement | null>(null);
-  const textMeasureRef = useRef<HTMLParagraphElement | null>(null);
-  const paginationStateRef = useRef({
-    chapterIndex: 0,
-    pageIndex: 0,
-    remainingParagraphs: [],
-    isFirstPage: true,
-  });
+  const textMeasureRef = useRef<HTMLDivElement | null>(null);
+  const paginationStateRef = useRef(createPaginationState());
   // eslint-disable-next-line react-hooks/refs
   const isBookFinished = paginationStateRef.current.chapterIndex >= book.chapters.length;
 
@@ -100,7 +90,7 @@ export default function Book({ book }: BookProps) {
     if (!textContainer || !textMeasure || !titleMeasure) return;
 
     const newPages: Page[] = [
-      { id: "blank", title: "", fullText: "" }
+      { id: "blank", title: "", html: "" }
     ];
 
     resetPaginationState();
@@ -132,20 +122,28 @@ export default function Book({ book }: BookProps) {
       {/* Measure ref */}
       <div
         className={`
-          absolute invisible pointer-events-none 
-          w-[90vw] md:max-w-250 aspect-3/5 md:aspect-5/3 h-full mx-auto
+          absolute invisible pointer-events-none
+          w-[90vw] md:max-w-250 aspect-3/5 md:aspect-5/3 mx-auto
         `}
       >
-        <div className="w-full h-full p-4 md:p-6 lg:p-8 pb-10 md:pl-12 flex flex-col">
-          <h2
-            ref={titleMeasureRef}
-            className="text-center text-2xl mb-4 empty:hidden"
-          ></h2>
-          <div ref={textContainerRef} className="overflow-hidden">
-            <p
-              ref={textMeasureRef}
-              className="w-full h-full text-justify whitespace-pre-line text-xs md:text-sm lg:text-sm"
-            ></p>
+        <div className="flex h-full w-full flex-row">
+          {/* Mirrors the real Left Page column, unused for measurement but keeps the flex-row split identical to the real frame */}
+          <div className="hidden md:block flex-1 overflow-hidden" />
+
+          {/* Mirrors the real Right Page column - always visible, so this is where measurement happens */}
+          <div className="w-full md:flex-1 overflow-hidden border-l">
+            <div className="p-4 pb-10 md:p-6 lg:p-8 md:pr-12 flex flex-col h-full">
+              <h2
+                ref={titleMeasureRef}
+                className="text-center text-2xl mb-4 empty:hidden"
+              ></h2>
+              <div ref={textContainerRef} className="flex-1 min-h-0 overflow-hidden">
+                <div
+                  ref={textMeasureRef}
+                  className="w-full h-full text-xs md:text-sm lg:text-sm"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -164,7 +162,7 @@ export default function Book({ book }: BookProps) {
           Previous Page
         </button>
         {/* Book */}
-        <div className="flex flex-row w-[90vw] md:max-w-250 aspect-3/5 md:aspect-5/3 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-50 relative">
+        <div className="flex flex-row w-[90vw] md:max-w-250 aspect-3/5 md:aspect-5/3 mx-auto my-auto rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] bg-amber-50 relative overflow-hidden">
           <div className="flex h-full w-full flex-row">
             {/* Left Page */}
             <div
@@ -173,16 +171,16 @@ export default function Book({ book }: BookProps) {
               bg-linear-to-r from-black/10 to-transparent 
             `}
             >
-              <div className="p-4 pb-10 md:p-6 lg:p-8 md:pl-12">
+              <div className="p-4 pb-10 md:p-6 lg:p-8 md:pl-12 flex flex-col h-full">
                 {leftPage.title && (
                   <h2 className="text-center text-2xl mb-4">
                     {leftPage.title}
                   </h2>
                 )}
-                {/* whitespace-pre-line preserves the line breaks in the text, keeping the original formatting */}
-                <p className="w-full text-justify whitespace-pre-line text-xs md:text-sm lg:text-sm">
-                  {leftPage.fullText}
-                </p>
+                <div
+                  className="flex-1 min-h-0 overflow-hidden w-full text-xs md:text-sm lg:text-sm"
+                  dangerouslySetInnerHTML={{ __html: leftPage.html }}
+                />
               </div>
             </div>
 
@@ -193,15 +191,16 @@ export default function Book({ book }: BookProps) {
               bg-linear-to-l from-black/10 to-transparent 
             `}
             >
-              <div className="p-4 pb-10 md:p-6 lg:p-8 md:pr-12">
+              <div className="p-4 pb-10 md:p-6 lg:p-8 md:pr-12 flex flex-col h-full">
                 {rightPage.title && (
                   <h2 className="text-center text-2xl mb-4">
                     {rightPage.title}
                   </h2>
                 )}
-                <p className="w-full text-justify whitespace-pre-line text-xs md:text-sm lg:text-sm">
-                  {rightPage.fullText}
-                </p>
+                <div
+                  className="flex-1 min-h-0 overflow-hidden w-full text-xs md:text-sm lg:text-sm"
+                  dangerouslySetInnerHTML={{ __html: rightPage.html }}
+                />
               </div>
             </div>
           </div>

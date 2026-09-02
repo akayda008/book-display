@@ -32,10 +32,39 @@ Already designed — repagination re-anchors to the chapter being read, reusing 
 **Priority:**
 - High (scheduled, not yet fixed)
 
+---
+### Book frame gap at medium viewport widths (768px-1200px)
+**Problem:**
+In the two-page spread layout, there's a visible black gap on the right and bottom of the book frame at viewport widths between roughly 768px and 1200px.
+
+**Impact:**
+Cosmetic only — doesn't affect reading or pagination correctness, but looks unfinished at those widths.
+
+**Possible Solution:**
+Found during Sub-project 1 manual testing, pre-existing (predates this cycle's changes — unrelated to the pagination/markdown work). Sub-project 2 (page-turn animation) will already be reworking this frame's layout/geometry for the flip mechanics, so fix it there rather than touching this CSS twice.
+
+**Priority:**
+- Low (cosmetic, deferred to Sub-project 2)
+
+---
+### Previous/Next buttons stack vertically around the book on mobile
+**Problem:**
+In single-page/mobile mode, the Previous button renders above the book frame and the Next button renders below it (the outer layout is `flex-col` on mobile, so the three items — button, book, button — stack in DOM order). They should sit on the same row for a usable page-turn experience.
+
+**Impact:**
+Poor UX on mobile — flipping pages requires reaching to opposite ends of the stacked layout instead of a single row of controls.
+
+**Possible Solution:**
+Found during Sub-project 1 manual testing, pre-existing (predates this cycle's changes). Sub-project 2 (page-turn animation) will already be reworking this frame's layout for the flip mechanics — fix it there rather than as a standalone change now.
+
+**Priority:**
+- Medium (real UX pain, deferred to Sub-project 2)
+
 ## Planned Improvements
 - Pagination engine rewrite for markdown support (Sub-project 1).
 - Fix the resize/repagination position-loss bug (Sub-project 5).
 - Add dev-time validation for duplicate slugs and unclosed `:::` fences (Sub-project 1 / Sub-project 4).
+- Fix the book frame's medium-viewport gap and mobile button layout (Sub-project 2).
 
 ## Deferred Decisions
 Decisions that have intentionally been postponed.
