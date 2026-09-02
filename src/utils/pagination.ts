@@ -1,4 +1,4 @@
-import { Book } from "@/types/book";
+import { Chapter } from "@/types/book";
 import {
   Align,
   Block,
@@ -273,7 +273,7 @@ function fitContentIntoPage(
 }
 
 export function generateNextPage(
-  chapters: Book["chapters"],
+  chapters: Chapter[],
   state: PaginationState,
   titleHeight: HTMLHeadingElement,
   containerHeight: HTMLDivElement,

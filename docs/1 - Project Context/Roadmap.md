@@ -20,7 +20,12 @@ Sub-project 3: PDF import / image-only pages (unified `pages`-type content model
 
 ### Planned Work
 
-- To be scoped at dispatch time.
+- Introduce the unified `pages`-type content model on `Book` (ADR-005): `content: {type: 'text', chapters: Chapter[]} | {type: 'pages', pages: string[], startsWithBlankPage?: boolean}`
+- Reader renders pages-type content via `next/image` (fill + object-fit: contain), letterboxed inside the existing fixed-aspect-ratio book frame — no pagination engine involvement, page count is just array length
+- Reuse the existing page-turn animation (desktop spine-flip / mobile-tablet spine-hinge) unchanged for pages-type content
+- "Page unavailable" placeholder for a broken/missing page image
+- Desktop two-page spread / mobile-tablet single-page rules from Sub-project 2 apply the same way to pages-type books
+- Add a small pages-type test fixture (placeholder page images + a temporary book entry) for manual verification, since shelf/routing to pick between books doesn't exist yet (Sub-project 4)
 
 ## Upcoming Milestones
 

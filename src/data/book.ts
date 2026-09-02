@@ -484,21 +484,48 @@ export const book1: Book = {
     "This book is a compilation of all the stories that Akaash has written over the years.",
   aboutAuthor:
     "Akaash is a young writer who is trying to find his voice while he is learning tech.",
-  chapters: [
-    chapter1,
-    chapter2,
-    chapter3,
-    chapter4,
-    chapter5,
-    chapter6,
-    chapter7,
-    chapter8,
-    chapter9,
-    chapter10,
-    chapter11,
-    chapter12,
-    chapterTestFormatting,
-    chapterTestList,
-    chapterTestBlockquote,
-  ],
+  content: {
+    type: "text",
+    chapters: [
+      chapter1,
+      chapter2,
+      chapter3,
+      chapter4,
+      chapter5,
+      chapter6,
+      chapter7,
+      chapter8,
+      chapter9,
+      chapter10,
+      chapter11,
+      chapter12,
+      chapterTestFormatting,
+      chapterTestList,
+      chapterTestBlockquote,
+    ],
+  },
+};
+
+// Temporary fixture for manually verifying Sub-project 3 (pages-type content).
+// No shelf/routing exists yet to pick between books (Sub-project 4) - reached via
+// the `?pages=1` query param on `/`, see src/app/page.tsx. Remove once a real
+// pages-type book (or Sub-project 4's routing) makes this unnecessary.
+export const pagesTestBook: Book = {
+  id: "pages-test-book",
+  title: "Pages Test Book",
+  author: "Sub-project 3 fixture",
+  blurb: "A temporary pages-type fixture for manually verifying image-page rendering.",
+  aboutAuthor: "N/A",
+  content: {
+    type: "pages",
+    startsWithBlankPage: true,
+    pages: [
+      "/books/test-pages/page-1.svg",
+      "/books/test-pages/page-2.svg",
+      "/books/test-pages/page-3.svg",
+      "/books/test-pages/page-4.svg",
+      "/books/test-pages/page-5.svg",
+      "/books/test-pages/page-missing.svg",
+    ],
+  },
 };

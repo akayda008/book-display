@@ -1,6 +1,7 @@
 "use client";
 
 import { Book as BookType } from "@/types/book";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createPaginationState, generateNextPage } from "../utils/pagination";
 
@@ -8,26 +9,39 @@ type BookProps = {
   book: BookType;
 };
 
-type Page = {
-  id: string;
-  title: string;
-  html: string;
-};
+type Page =
+  | { kind: "text"; id: string; title: string; html: string }
+  | { kind: "image"; id: string; src: string }
+  | { kind: "blank"; id: string };
 
-const EMPTY_PAGE: Page = { id: "", title: "", html: "" };
+const EMPTY_PAGE: Page = { kind: "blank", id: "" };
 
 const TURN_MS = 650; // page-turn animation duration, both platforms
 
 // Below this width, the reader shows a single page instead of a two-page spread.
 const MOBILE_BREAKPOINT = 1200;
 
-const framePagePadding = "p-4 pb-10 md:p-6 lg:p-8";
+// Deliberately not Tailwind-responsive (no md:/lg:): the reader's own
+// single/two-page cutoff (MOBILE_BREAKPOINT, 1200px) is JS-driven and doesn't
+// line up with Tailwind's default 768px/1024px breakpoints, so a handful of
+// leftover responsive classes here used to create three visually different
+// sub-ranges inside what is one logical single-page view (0-1200px) - most
+// visibly, an inconsistent spine-side gutter that showed up on text pages too,
+// not just images. One fixed value applies uniformly across the whole
+// single-page range (and happens to already match what two-page mode - always
+// >1024px - rendered anyway).
+const framePagePadding = "p-8";
+const pageTextSize = "text-sm";
+const frameGap = "gap-4";
 
 export default function Book({ book }: BookProps) {
+  const isPagesBook = book.content.type === "pages";
+
   const [pages, setPages] = useState<Page[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [layoutVersion, setLayoutVersion] = useState(0);
+  const [brokenPages, setBrokenPages] = useState<Set<string>>(new Set());
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [flipDir, setFlipDir] = useState<1 | -1>(1);
@@ -50,7 +64,21 @@ export default function Book({ book }: BookProps) {
   const reducedMotionRef = useRef(false);
   const endTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const isBookFinished = paginationStateRef.current.chapterIndex >= book.chapters.length;
+  // Pages-type books have no chapters and no buffering - the full page list is
+  // known upfront, so "finished" is just "reached the last page" (handled via
+  // totalPages directly in goNext), not a chapter-generation concept.
+  const isBookFinished =
+    book.content.type === "text" &&
+    paginationStateRef.current.chapterIndex >= book.content.chapters.length;
+
+  function markPageBroken(id: string) {
+    setBrokenPages((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     isAnimatingRef.current = isAnimating;
@@ -70,8 +98,11 @@ export default function Book({ book }: BookProps) {
     paginationStateRef.current = createPaginationState();
   }
 
-  /** Generates pages, ahead of what's currently displayed, up to `targetCount`. */
+  /** Generates pages, ahead of what's currently displayed, up to `targetCount`. Text books only - pages-type books have their full page list built upfront. */
   function bufferAhead(targetCount: number): Page[] {
+    if (book.content.type !== "text") return pages;
+    const chapters = book.content.chapters;
+
     const textContainer = textContainerRef.current;
     const textMeasure = textMeasureRef.current;
     const titleMeasure = titleMeasureRef.current;
@@ -80,14 +111,14 @@ export default function Book({ book }: BookProps) {
     const newPages = [...pages];
     while (newPages.length < targetCount) {
       const page = generateNextPage(
-        book.chapters,
+        chapters,
         paginationStateRef.current,
         titleMeasure,
         textContainer,
         textMeasure
       );
       if (!page) break;
-      newPages.push(page);
+      newPages.push({ kind: "text", ...page });
     }
 
     if (newPages.length !== pages.length) setPages(newPages);
@@ -123,12 +154,19 @@ export default function Book({ book }: BookProps) {
 
   function goNext() {
     if (isAnimatingRef.current) return;
-    const atEnd = isBookFinished && currentPage + pagesPerView >= totalPages;
+
+    // Pages-type books have their full page list upfront, so "end" is simply
+    // running out of array - no chapter-finished/buffering concept applies.
+    const atEnd = isPagesBook
+      ? currentPage + pagesPerView >= totalPages
+      : isBookFinished && currentPage + pagesPerView >= totalPages;
     if (atEnd) return;
 
-    const buffered = bufferAhead(currentPage + pagesPerView * 3);
-    // Guarantee the page this click will land on actually exists before animating to it.
-    if (buffered.length <= currentPage + pagesPerView) return;
+    if (!isPagesBook) {
+      const buffered = bufferAhead(currentPage + pagesPerView * 3);
+      // Guarantee the page this click will land on actually exists before animating to it.
+      if (buffered.length <= currentPage + pagesPerView) return;
+    }
 
     const advance = () => setCurrentPage((p) => p + pagesPerView);
 
@@ -168,30 +206,46 @@ export default function Book({ book }: BookProps) {
   }
 
   useEffect(() => {
+    clearAnimationTimers();
+    setIsAnimating(false);
+    setFlipT(0);
+    setBrokenPages(new Set());
+
+    if (book.content.type === "pages") {
+      const content = book.content;
+      const imagePages: Page[] = content.pages.map((src, i) => ({
+        kind: "image",
+        id: `${i}--${src}`,
+        src,
+      }));
+      const newPages: Page[] = content.startsWithBlankPage
+        ? [{ kind: "blank", id: "blank" }, ...imagePages]
+        : imagePages;
+      setPages(newPages);
+      setCurrentPage(0);
+      return;
+    }
+
     const textContainer = textContainerRef.current;
     const textMeasure = textMeasureRef.current;
     const titleMeasure = titleMeasureRef.current;
 
     if (!textContainer || !textMeasure || !titleMeasure) return;
 
-    clearAnimationTimers();
-    setIsAnimating(false);
-    setFlipT(0);
-
-    const newPages: Page[] = [{ id: "blank", title: "", html: "" }];
+    const newPages: Page[] = [{ kind: "blank", id: "blank" }];
 
     resetPaginationState();
 
     for (let i = 0; i < 3; i++) {
       const page = generateNextPage(
-        book.chapters,
+        book.content.chapters,
         paginationStateRef.current,
         titleMeasure,
         textContainer,
         textMeasure
       );
       if (!page) break;
-      newPages.push(page);
+      newPages.push({ kind: "text", ...page });
     }
     setPages(newPages);
     setCurrentPage(0);
@@ -208,7 +262,10 @@ export default function Book({ book }: BookProps) {
   }, []);
 
   const isNextDisabled =
-    isAnimating || (isBookFinished && currentPage + pagesPerView >= totalPages);
+    isAnimating ||
+    (isPagesBook
+      ? currentPage + pagesPerView >= totalPages
+      : isBookFinished && currentPage + pagesPerView >= totalPages);
   const isPreviousDisabled = isAnimating || currentPage === 0;
 
   // Mobile Previous is visually distinct from every other turn: instead of
@@ -252,8 +309,22 @@ export default function Book({ book }: BookProps) {
   }
 
   const leafAngle = isMobilePrevious ? -180 + 180 * flipT : flipDir * -180 * flipT;
-  const leafFrontPad = isMobile ? "md:pr-12" : leafOnRight ? "md:pr-12" : "md:pl-12";
-  const leafBackPad = isMobile ? "md:pr-12" : leafOnRight ? "md:pl-12" : "md:pr-12";
+  const leafFrontSide: "left" | "right" = isMobile ? "right" : leafOnRight ? "right" : "left";
+  const leafBackSide: "left" | "right" = isMobile ? "right" : leafOnRight ? "left" : "right";
+
+  // Spine-side gutter, extra inner margin away from the book's crease -
+  // meaningful only in true two-page mode (a single visible page has no
+  // spine to gutter against). Gated on the JS `isMobile` flag rather than a
+  // Tailwind `md:`/`lg:` breakpoint, since MOBILE_BREAKPOINT (1200px) doesn't
+  // line up with Tailwind's defaults (768px/1024px) - a `md:`-based gutter
+  // used to stay active for part of the single-page range, which is what
+  // caused the off-center content reported in verification.
+  function gutterPad(side: "left" | "right") {
+    if (isMobile) return "";
+    return side === "left" ? "pl-12" : "pr-12";
+  }
+  const leafFrontPad = gutterPad(leafFrontSide);
+  const leafBackPad = gutterPad(leafBackSide);
 
   // Frame sizing: scale to fill the available viewport (both width and
   // height) uniformly, rather than deriving from width alone. Desktop aims
@@ -269,8 +340,58 @@ export default function Book({ book }: BookProps) {
     ? { width: "min(90vw, calc(70vh * 3 / 5))", aspectRatio: "3 / 5" }
     : { width: "min(80vw, calc(78vh * 5 / 3))", aspectRatio: "5 / 3" };
 
+  function renderPageTitle(page: Page) {
+    if (page.kind !== "text" || !page.title) return null;
+    return <h2 className="text-center text-2xl mb-4">{page.title}</h2>;
+  }
+
+  // Image pages have no "spine gutter" concept the way formatted text does -
+  // in true two-page mode they should still sit centered in their page slot
+  // rather than nudged aside by the text-oriented gutter (gutterPad above).
+  // No counter-margin is needed in single-page mode any more: gutterPad
+  // already emits nothing there, for text and images alike.
+  function gutterCounterClass(side: "left" | "right") {
+    if (isMobile) return "";
+    return side === "left" ? "-ml-12" : "-mr-12";
+  }
+
+  function renderPageBody(page: Page, gutterSide: "left" | "right") {
+    if (page.kind === "text") {
+      return (
+        <div
+          className={`flex-1 min-h-0 overflow-hidden w-full ${pageTextSize}`}
+          dangerouslySetInnerHTML={{ __html: page.html }}
+        />
+      );
+    }
+    if (page.kind === "image") {
+      if (brokenPages.has(page.id)) {
+        return (
+          <div
+            className={`flex-1 min-h-0 w-full flex items-center justify-center text-black/40 ${pageTextSize} italic ${gutterCounterClass(gutterSide)}`}
+          >
+            Page unavailable
+          </div>
+        );
+      }
+      return (
+        <div className={`relative flex-1 min-h-0 w-full ${gutterCounterClass(gutterSide)}`}>
+          <Image
+            src={page.src}
+            alt=""
+            fill
+            unoptimized
+            style={{ objectFit: "contain" }}
+            onError={() => markPageBroken(page.id)}
+          />
+        </div>
+      );
+    }
+    return <div className="flex-1 min-h-0 overflow-hidden w-full" />;
+  }
+
   return (
-    <div className="flex flex-col items-center gap-3 md:gap-4 w-full px-2">
+    <div className={`flex flex-col items-center ${frameGap} w-full px-2`}>
       {/* Frame column: real frame + its measurement clone, sharing the exact same available width */}
       <div className="relative w-full">
         {/* Measure ref - kept geometrically identical to the real right page column below */}
@@ -278,10 +399,10 @@ export default function Book({ book }: BookProps) {
           <div className="flex h-full w-full flex-row">
             <div className={`${isMobile ? "hidden" : "block"} flex-1 overflow-hidden`} />
             <div className="w-full md:flex-1 overflow-hidden border-l">
-              <div className={`${framePagePadding} md:pr-12 flex flex-col h-full`}>
+              <div className={`${framePagePadding} ${gutterPad("right")} flex flex-col h-full`}>
                 <h2 ref={titleMeasureRef} className="text-center text-2xl mb-4 empty:hidden"></h2>
                 <div ref={textContainerRef} className="flex-1 min-h-0 overflow-hidden">
-                  <div ref={textMeasureRef} className="w-full h-full text-xs md:text-sm lg:text-sm"></div>
+                  <div ref={textMeasureRef} className={`w-full h-full ${pageTextSize}`}></div>
                 </div>
               </div>
             </div>
@@ -298,23 +419,17 @@ export default function Book({ book }: BookProps) {
             <div
               className={`${isMobile ? "hidden" : "block"} flex-1 overflow-hidden text-black bg-linear-to-r from-black/10 to-transparent`}
             >
-              <div className={`${framePagePadding} md:pl-12 flex flex-col h-full`}>
-                {baseLeftPage.title && <h2 className="text-center text-2xl mb-4">{baseLeftPage.title}</h2>}
-                <div
-                  className="flex-1 min-h-0 overflow-hidden w-full text-xs md:text-sm lg:text-sm"
-                  dangerouslySetInnerHTML={{ __html: baseLeftPage.html }}
-                />
+              <div className={`${framePagePadding} ${gutterPad("left")} flex flex-col h-full`}>
+                {renderPageTitle(baseLeftPage)}
+                {renderPageBody(baseLeftPage, "left")}
               </div>
             </div>
 
             {/* Right Page (the only page shown on mobile) */}
             <div className="w-full md:flex-1 overflow-hidden text-black border-l bg-linear-to-l from-black/10 to-transparent">
-              <div className={`${framePagePadding} md:pr-12 flex flex-col h-full`}>
-                {baseRightPage.title && <h2 className="text-center text-2xl mb-4">{baseRightPage.title}</h2>}
-                <div
-                  className="flex-1 min-h-0 overflow-hidden w-full text-xs md:text-sm lg:text-sm"
-                  dangerouslySetInnerHTML={{ __html: baseRightPage.html }}
-                />
+              <div className={`${framePagePadding} ${gutterPad("right")} flex flex-col h-full`}>
+                {renderPageTitle(baseRightPage)}
+                {renderPageBody(baseRightPage, "right")}
               </div>
             </div>
           </div>
@@ -339,11 +454,8 @@ export default function Book({ book }: BookProps) {
                 style={{ backfaceVisibility: "hidden" }}
               >
                 <div className={`${framePagePadding} ${leafFrontPad} flex flex-col h-full`}>
-                  {leafFront.title && <h2 className="text-center text-2xl mb-4">{leafFront.title}</h2>}
-                  <div
-                    className="flex-1 min-h-0 overflow-hidden w-full text-xs md:text-sm lg:text-sm"
-                    dangerouslySetInnerHTML={{ __html: leafFront.html }}
-                  />
+                  {renderPageTitle(leafFront)}
+                  {renderPageBody(leafFront, leafFrontSide)}
                 </div>
               </div>
 
@@ -357,11 +469,8 @@ export default function Book({ book }: BookProps) {
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                   <div className={`${framePagePadding} ${leafBackPad} flex flex-col h-full`}>
-                    {leafBack.title && <h2 className="text-center text-2xl mb-4">{leafBack.title}</h2>}
-                    <div
-                      className="flex-1 min-h-0 overflow-hidden w-full text-xs md:text-sm lg:text-sm"
-                      dangerouslySetInnerHTML={{ __html: leafBack.html }}
-                    />
+                    {renderPageTitle(leafBack)}
+                    {renderPageBody(leafBack, leafBackSide)}
                   </div>
                 </div>
               )}
@@ -373,7 +482,7 @@ export default function Book({ book }: BookProps) {
       </div>
 
       {/* Previous/Next controls, centered in a row underneath the book */}
-      <div className="flex flex-row items-center justify-center gap-3 md:gap-4">
+      <div className={`flex flex-row items-center justify-center ${frameGap}`}>
         <button
           onClick={goPrevious}
           disabled={isPreviousDisabled}
