@@ -106,269 +106,269 @@ const chapter5: Chapter = {
   id: "poem1",
   title: "What Love is?",
   fullText: `
-  As I walk down the road
-    My eyes tend to wander around,
-  I see a large crowd; people from all over
-    Amidst the noise, making beautiful sounds.
-  The couples, young and old, a large group of friends,
-    A restaurant full of families.
-  I pass them by and a question arises
-    Is that what love is?
+  |As I walk down the road
+  |  My eyes tend to wander around,
+  |I see a large crowd; people from all over
+  |  Amidst the noise, making beautiful sounds.
+  |The couples, young and old, a large group of friends,
+  |  A restaurant full of families.
+  |I pass them by and a question arises
+  |  Is that what love is?
 
-  I see a young couple on the bike,
-    The pillion holding the rider really tight
-  They both were looking lovely
-    Probably it was their date night
-  They would have a good time,
-    Eat well and end the date with a kiss,
-  Go home and return to their daily lives
-    Is that what love is?
+  |I see a young couple on the bike,
+  |  The pillion holding the rider really tight
+  |They both were looking lovely
+  |  Probably it was their date night
+  |They would have a good time,
+  |  Eat well and end the date with a kiss,
+  |Go home and return to their daily lives
+  |  Is that what love is?
 
-  I see a family of four in the restaurant
-    The ambience and aesthetic are really nice.
-  The kids order food as if there is no tomorrow
-    And the parents don't seem to care about the price.
-  To see their children happy
-    They'd make sacrifices; millions
-  Work day and night, to watch them smile ear to ear
-    Is that what love is?
+  |I see a family of four in the restaurant
+  |  The ambience and aesthetic are really nice.
+  |The kids order food as if there is no tomorrow
+  |  And the parents don't seem to care about the price.
+  |To see their children happy
+  |  They'd make sacrifices; millions
+  |Work day and night, to watch them smile ear to ear
+  |  Is that what love is?
 
-  I see two kids on the road playing with their dog
-    Their names Bhaiya and Chote
-  The younger one falls and he cries
-    Bhaiya consoles him by saying “Strong log nahi rote”
-  Listening to him he slowly stops crying
-    When the retriever brings the ball, he laughs.
-  Trying their best to make him smile again
-    Is that what love is?
+  |I see two kids on the road playing with their dog
+  |  Their names Bhaiya and Chote
+  |The younger one falls and he cries
+  |  Bhaiya consoles him by saying “Strong log nahi rote”
+  |Listening to him he slowly stops crying
+  |  When the retriever brings the ball, he laughs.
+  |Trying their best to make him smile again
+  |  Is that what love is?
 
-  I see a mother running from the medical store,
-    A worried look is painted across her face
-  The father following, daughter in his arms
-    She was suffering from fever; a terrible case.
-  The mother would change the wet cloth, all through the night
-    The father would call up all the doctors
-  The concerns shown, even for a small scratch
-    Is that what love is?
+  |I see a mother running from the medical store,
+  |  A worried look is painted across her face
+  |The father following, daughter in his arms
+  |  She was suffering from fever; a terrible case.
+  |The mother would change the wet cloth, all through the night
+  |  The father would call up all the doctors
+  |The concerns shown, even for a small scratch
+  |  Is that what love is?
 
-  I see an old man in an ice cream parlour
-    Behind him a small girl with 7 scoops hides
-  You can tell that the mother is irritated
-    “You always spoil her like this”, she chides.
-  He always knows that he will get scolded
-    Still he guards the little one from the cold stares
-  Spoiling her a bit, once in a while
-    Is that what love is?
+  |I see an old man in an ice cream parlour
+  |  Behind him a small girl with 7 scoops hides
+  |You can tell that the mother is irritated
+  |  “You always spoil her like this”, she chides.
+  |He always knows that he will get scolded
+  |  Still he guards the little one from the cold stares
+  |Spoiling her a bit, once in a while
+  |  Is that what love is?
 
-  I see a group of boys sitting in a corner
-    The bikes significantly less than them
-  Making fun of each other, laughing together
-    Ready to lay their lives because they are friends.
-  No one is related through blood
-    Nor connected through distant families
-  Yet the deep bonds they share
-    Is that what love is?
+  |I see a group of boys sitting in a corner
+  |  The bikes significantly less than them
+  |Making fun of each other, laughing together
+  |  Ready to lay their lives because they are friends.
+  |No one is related through blood
+  |  Nor connected through distant families
+  |Yet the deep bonds they share
+  |  Is that what love is?
 
-  I see a teenage couple walking together
-    Getting embarrassed while holding hands
-  Enjoying the conversation yet alert of their surroundings
-    As according to society, their acts are banned.
-  Maybe they are the soulmate they sought for
-    Or maybe a beautiful lies fuelled by their belief
-  Giving their all with no clue of what the future holds
-    Is that what love is?
+  |I see a teenage couple walking together
+  |  Getting embarrassed while holding hands
+  |Enjoying the conversation yet alert of their surroundings
+  |  As according to society, their acts are banned.
+  |Maybe they are the soulmate they sought for
+  |  Or maybe a beautiful lies fuelled by their belief
+  |Giving their all with no clue of what the future holds
+  |  Is that what love is?
 
-  I see a woman looking at the sky with teary eyes
-    Past her, a man sitting on a bench all alone
-  He watched her walk away and smiled for a moment
-    And then broke into tears since a part of him was gone
-  Even if they couldn't be together till the end,
-    They were glad to have each other as a part of their lives
-  Understanding one other and accepting to walk away
-    Is that what love is?
+  |I see a woman looking at the sky with teary eyes
+  |  Past her, a man sitting on a bench all alone
+  |He watched her walk away and smiled for a moment
+  |  And then broke into tears since a part of him was gone
+  |Even if they couldn't be together till the end,
+  |  They were glad to have each other as a part of their lives
+  |Understanding one other and accepting to walk away
+  |  Is that what love is?
 
-  I see a man on his knees offering his heart
-    The woman was not ready and she walks away
-  The man breaks down, tears run down his expressionless face
-    Questions if she ever felt the same way.
-  He gets up and starts walking feeling embarrassed
-    But surely he would return to the same place
-  Ready to devote his heart again, to another soul
-    Is that what love is?
+  |I see a man on his knees offering his heart
+  |  The woman was not ready and she walks away
+  |The man breaks down, tears run down his expressionless face
+  |  Questions if she ever felt the same way.
+  |He gets up and starts walking feeling embarrassed
+  |  But surely he would return to the same place
+  |Ready to devote his heart again, to another soul
+  |  Is that what love is?
 
-  I see a pair with books and pens
-    It was a student and teacher.
-  The boy studying but only by looks
-    Teacher looking past the act helps him focus more.
-  Here again there are two strangers sitting together
-    Working towards the coming generations success
-  Unknown people resembling a father - son pair
-    Is that what love is?
+  |I see a pair with books and pens
+  |  It was a student and teacher.
+  |The boy studying but only by looks
+  |  Teacher looking past the act helps him focus more.
+  |Here again there are two strangers sitting together
+  |  Working towards the coming generations success
+  |Unknown people resembling a father - son pair
+  |  Is that what love is?
 
-  I see an old couple walking back and forth
-    One wearing kurta and track pant, the other wearing a saree
-  Wrinkled faces, tired legs, still lively at heart
-    Looking at each other with eyes filled with glee.
-  Spent a lifetime together but nothing ever changed
-    The butterflies in the stomach continues to exist
-  Fighting through life together and making it to the end
-    Is that what love is?
+  |I see an old couple walking back and forth
+  |  One wearing kurta and track pant, the other wearing a saree
+  |Wrinkled faces, tired legs, still lively at heart
+  |  Looking at each other with eyes filled with glee.
+  |Spent a lifetime together but nothing ever changed
+  |  The butterflies in the stomach continues to exist
+  |Fighting through life together and making it to the end
+  |  Is that what love is?
 
-  My dear friend once told me
-    Love is where you make sacrifices for the other
-  You one care for them, have concerns,
-    Even if you are not together.
-  It is when you give, without any second thoughts
-    Be selfless and show a million acts of kindness
-  And you continue doing it, even if it's not reciprocated
-    Maybe that is what love is?
+  |My dear friend once told me
+  |  Love is where you make sacrifices for the other
+  |You one care for them, have concerns,
+  |  Even if you are not together.
+  |It is when you give, without any second thoughts
+  |  Be selfless and show a million acts of kindness
+  |And you continue doing it, even if it's not reciprocated
+  |  Maybe that is what love is?
 
-  I am reminded again, of something my friend once said
-    I think romantic love is explained by this
-  “We were similar enough to understand each other,
-    But different enough to be full of surprises”
-  I now believe, love is something so vague that no one can understand it,
-    Yet it is so simple that everyone can express and feel it
-  Being empathetic and compassionate towards everyone
-    I suppose that is what love is.
-  `,
+  |I am reminded again, of something my friend once said
+  |  I think romantic love is explained by this
+  |“We were similar enough to understand each other,
+  |  But different enough to be full of surprises”
+  |I now believe, love is something so vague that no one can understand it,
+  |  Yet it is so simple that everyone can express and feel it
+  |Being empathetic and compassionate towards everyone
+  |  I suppose that is what love is.
+`,
 };
 
 const chapter6: Chapter = {
   id: "poem2",
   title: "The Past and the Present",
   fullText: `
-  I woke up in the morning
-  It was just like any other day
-  I reached my class and the teacher said
-  We are discussing colonisation today
+  |I woke up in the morning
+  |It was just like any other day
+  |I reached my class and the teacher said
+  |We are discussing colonisation today
 
-  The outsiders took one look at us
-  Said that we were uncivilised
-  Said they will help us
-  That's how our enslavement was organised
+  |The outsiders took one look at us
+  |Said that we were uncivilised
+  |Said they will help us
+  |That's how our enslavement was organised
 
-  I rushed back to my grandma
-  Who was born with the nation
-  I asked her what it was like
-  To live in those conditions
+  |I rushed back to my grandma
+  |Who was born with the nation
+  |I asked her what it was like
+  |To live in those conditions
 
-  She narrated it like a fairy tale
-  Of a world long ago
-  Gave details so wonderful
-  It was like watching a show
+  |She narrated it like a fairy tale
+  |Of a world long ago
+  |Gave details so wonderful
+  |It was like watching a show
 
-  I ran and asked my elder brother
-  “Tell me more about our history”
-  Being a history student himself
-  He told it's filled with mystery
+  |I ran and asked my elder brother
+  |“Tell me more about our history”
+  |Being a history student himself
+  |He told it's filled with mystery
 
-  Confused now I asked my dad
-  How was the medieval life?
-  I asked if it was similar to ours
-  “Not at all”, he replied.
+  |Confused now I asked my dad
+  |How was the medieval life?
+  |I asked if it was similar to ours
+  |“Not at all”, he replied.
 
-  They had to pay for living in their land
-  They were thrown out of their houses
-  They couldn't charge us for breathing
-  So on salt they levied taxes.
+  |They had to pay for living in their land
+  |They were thrown out of their houses
+  |They couldn't charge us for breathing
+  |So on salt they levied taxes.
 
-  Our traditions and cultures ridiculed
-  Our age old knowledge destroyed
-  Our spiritual and material fortune stolen
-  But all allegations denied.
+  |Our traditions and cultures ridiculed
+  |Our age old knowledge destroyed
+  |Our spiritual and material fortune stolen
+  |But all allegations denied.
 
-  We were deemed to be the greatest
-  The world's greatest civilisation
-  All our progress summed up to nothing
-  When they introduced industrialisation
+  |We were deemed to be the greatest
+  |The world's greatest civilisation
+  |All our progress summed up to nothing
+  |When they introduced industrialisation
 
-  Hearing all this made me think
-  The west is not that great
-  My dad had sensed it and brought me back
-  Said they don't deserve out hate.
+  |Hearing all this made me think
+  |The west is not that great
+  |My dad had sensed it and brought me back
+  |Said they don't deserve out hate.
 
-  My mother who is a teacher
-  Joined into the conversation
-  Said those people are long gone
-  Now it's a different generation
+  |My mother who is a teacher
+  |Joined into the conversation
+  |Said those people are long gone
+  |Now it's a different generation
 
-  I started thinking aloud
-  Looking back in time it looks like story
-  My brother added in a comment
-  That story is our history.
-  `,
+  |I started thinking aloud
+  |Looking back in time it looks like story
+  |My brother added in a comment
+  |That story is our history.
+`,
 };
 
 const chapter7: Chapter = {
   id: "poem3",
   title: "Sleep",
   fullText: `
-  I stay up the whole night
-  With some thoughts very deep,
-  Then I wake up in the morning
-  Complaining about how I didn't sleep.
+  |I stay up the whole night
+  |With some thoughts very deep,
+  |Then I wake up in the morning
+  |Complaining about how I didn't sleep.
 
-  I keep checking my phone
-  Thinking what is the time,
-  What else do I gotta do
-  To complete this sleep of mine.
+  |I keep checking my phone
+  |Thinking what is the time,
+  |What else do I gotta do
+  |To complete this sleep of mine.
 
-  I think about a lot of things
-  From my future to my destiny,
-  Or sometimes just the simple thoughts like
-  What clothes to wear or what food to eat.
+  |I think about a lot of things
+  |From my future to my destiny,
+  |Or sometimes just the simple thoughts like
+  |What clothes to wear or what food to eat.
 
-  Lots of people talk about
-  The things they see in a dream,
-  When they ask me about mine
-  I say there are none that I have seen.
+  |Lots of people talk about
+  |The things they see in a dream,
+  |When they ask me about mine
+  |I say there are none that I have seen.
 
-  All these things go on my mind
-  While I try to keep my sanity,
-  Then I just cover my eyes
-  In the hope that I fall asleep.
-    `,
+  |All these things go on my mind
+  |While I try to keep my sanity,
+  |Then I just cover my eyes
+  |In the hope that I fall asleep.
+`,
   };
 
   const chapter8: Chapter = {
     id: "poem4",
     title: "Life in Pandemic",
     fullText: `
-    It all started when it was time
-  For getting finished with my Board,
-  Preparing a list of movies and shows
-  So that in the wait for results I don't get bored.
+  |It all started when it was time
+  |For getting finished with my Board,
+  |Preparing a list of movies and shows
+  |So that in the wait for results I don't get bored.
 
-  But as it started to spread more and more
-  We were given no choice, but to stay indoor.
-  I was surprised when the world went into a lockdown
-  Since I never expected the world to shut down!
+  |But as it started to spread more and more
+  |We were given no choice, but to stay indoor.
+  |I was surprised when the world went into a lockdown
+  |Since I never expected the world to shut down!
 
-  We had a lot of time to spare
-  Nothing in our hands to be done,
-  All of sitting under the comfort of our roofs
-  Thinking what if Corona never had come.
+  |We had a lot of time to spare
+  |Nothing in our hands to be done,
+  |All of sitting under the comfort of our roofs
+  |Thinking what if Corona never had come.
 
-  During the peak of the pandemic
-  We banged plates and switched off lights.
-  Finally the pollution reduced
-  And we could witness the beautiful nights.
+  |During the peak of the pandemic
+  |We banged plates and switched off lights.
+  |Finally the pollution reduced
+  |And we could witness the beautiful nights.
 
-  We all were inside our homes
-  Attending online classes and working from home
-  But during all these, unfortunately
-  Some of us were sent to the tomb.
+  |We all were inside our homes
+  |Attending online classes and working from home
+  |But during all these, unfortunately
+  |Some of us were sent to the tomb.
 
-  Even though it was a scary pandemic
-  It made the world a cleaner and better place.
-  Now we all understand the word hygiene
-  And what it means to stay safe.
+  |Even though it was a scary pandemic
+  |It made the world a cleaner and better place.
+  |Now we all understand the word hygiene
+  |And what it means to stay safe.
 
-  COVID, a boon or bane? Good or bad?
-  Well, honestly I don't know anything about it
-  But all I know that it was a roller coaster ride
-  Of being happy and sad.
+  |COVID, a boon or bane? Good or bad?
+  |Well, honestly I don't know anything about it
+  |But all I know that it was a roller coaster ride
+  |Of being happy and sad.
 `,
 };
 
@@ -376,26 +376,26 @@ const chapter9: Chapter = {
   id: "poem5",
   title: "Choose Darkness over Light",
   fullText: `
-  Please fall for the darkness, not the light
-  As it is always the darkness that prevails at night. 
-  I pray that you make it, with or without fear,
-  Because once the sun rises, the light will appear.
+  |Please fall for the darkness, not the light
+  |As it is always the darkness that prevails at night.
+  |I pray that you make it, with or without fear,
+  |Because once the sun rises, the light will appear.
 
-  It will be scary; it could get ugly,
-  It might even hurt if you stay,
-  But I'll fight for you my lovely,
-  For you are the light of my day.
-  `,
+  |It will be scary; it could get ugly,
+  |It might even hurt if you stay,
+  |But I'll fight for you my lovely,
+  |For you are the light of my day.
+`,
 };
 
 const chapter10: Chapter = {
   id: "poem6",
   title: "Moon in the Blue Sky",
   fullText: `
-  I peek at our memories,
-  like the moon in the blue sky.
-  And just like the colours above, 
-  you too, fade away into the night.
+  |I peek at our memories,
+  |like the moon in the blue sky.
+  |And just like the colours above,
+  |you too, fade away into the night.
 `,
 };
 
@@ -439,6 +439,43 @@ const chapter12: Chapter = {
   `,
 };
 
+const chapterTestFormatting: Chapter = {
+  id: "test_formatting",
+  title: "Formatting Test Chapter",
+  fullText: `
+  ## A Sub-heading
+
+  ${Array.from({ length: 30 }, () => "This paragraph exists only to verify that a **long run of bold text mixed with *nested italics* and plain words** can be split across a page boundary without ever leaving a bold or italic tag unclosed.").join(" ")}
+
+  ::: center
+  This paragraph is centered using the ::: center fence.
+  :::
+
+  ::: right
+  This paragraph is right-aligned using the ::: right fence.
+  :::
+
+  | A poem line inside this test chapter,
+  |   indented to show the line-block marker still works here.
+  `,
+};
+
+const chapterTestList: Chapter = {
+  id: "test_list",
+  title: "Long List Test Chapter",
+  fullText: `
+  ${Array.from({ length: 30 }, (_, i) => `- List item number ${i + 1}, long enough on its own to add real height to the page.`).join("\n  ")}
+  `,
+};
+
+const chapterTestBlockquote: Chapter = {
+  id: "test_blockquote",
+  title: "Long Blockquote Test Chapter",
+  fullText: `
+  ${Array.from({ length: 25 }, (_, i) => `> Blockquote line number ${i + 1}, also long enough on its own to add real height to the page.`).join("\n  ")}
+  `,
+};
+
 export const book1: Book = {
   id: "book1",
   title: "My Work",
@@ -460,5 +497,8 @@ export const book1: Book = {
     chapter10,
     chapter11,
     chapter12,
+    chapterTestFormatting,
+    chapterTestList,
+    chapterTestBlockquote,
   ],
 };
