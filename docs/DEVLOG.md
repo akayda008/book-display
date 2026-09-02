@@ -1,3 +1,49 @@
+## 2026-09-02 — Sub-project 3: Corrective round 2
+
+- **Milestone/cycle**: A second corrective round on Sub-project 3. Round 1's fix (canceling the spine gutter for image pages only) made the reported symptom go away, but the user found the real issue while re-checking: the same misalignment existed on text pages too, and within the single-page view (0-1200px) there were really three different-looking sub-ranges, not one consistent look — leftover from before Sub-project 2 moved the single/two-page cutoff to 1200px while several styles were still tied to Tailwind's default 768px/1024px breakpoints.
+
+- **What was done**, in plain terms:
+  - Reverted round 1's approach of only fixing images, and instead fixed the actual cause: several styles inside the page frame — the spine-side gutter, the inner padding, the body-text size, and the spacing around the frame — were still written as Tailwind responsive classes (`md:`, `lg:`) tied to 768px/1024px, even though the reader's own single-page-vs-two-page decision happens at a different, JS-driven 1200px. That meant a "single page" could look three subtly different ways depending on exactly how wide the window was (0-768px, 768-1024px, 1024-1200px), instead of looking the same and just scaling with the frame.
+  - Consolidated all of those to one fixed value, matching what the widest single-page sub-range (1024-1200px) already looked like: page padding is now always `p-8` (was a `p-4`/`p-6`/`p-8` step), body text is always `text-sm` (was `text-xs`/`text-sm`), and the gap around the frame and between the buttons is always `gap-4` (was `gap-3`/`gap-4`). These no longer depend on any breakpoint at all — they're now the same in single-page and two-page mode alike.
+  - The spine-side gutter (extra inner margin next to the book's crease, meaningful only when two pages are shown side by side) now turns on and off based on the reader's own `isMobile` flag instead of Tailwind's `md:` breakpoint, so it's simply never present in single-page view, at any width — which is what actually fixes the centering issue, for text and images alike, not just images.
+  - Removed round 1's image-only counter-margin as the primary fix (kept the mechanism, but it's now only relevant in true two-page mode, and only applies automatically via the same gutter logic).
+  - Logged round 1 to `docs/MISTAKES.md` — it fixed the reported symptom but not the underlying cause, since it was scoped to image pages when the same bug also affected text.
+
+- **Verified**: Ran `npx tsc --noEmit` (clean), `npm run lint` (clean, zero warnings), and `npm run build` (production build succeeds). Did not launch the app myself — the user's manual pass confirms the visual result.
+
+- **What's left**: Nothing scoped to this corrective round is left undone. The two-page (≥1200px) view was not reported as having issues and wasn't a target of this round beyond keeping it visually equivalent to before (it already matched the tier this round unified everything else to).
+
+## 2026-09-02 — Sub-project 3: Corrective round 1
+
+- **Milestone/cycle**: A small corrective round on Sub-project 3, from round-1 manual verification. Everything else passed (text book unaffected, desktop spread, mobile advance/animation, broken-page placeholder, reduced motion); only the single-page image centering needed fixing.
+
+- **What was done**, in plain terms:
+  - The page frame's inner padding has a small extra "gutter" (`md:pl-12`/`md:pr-12`, an extra ~3rem of space) on whichever side faces the book's spine — that's there so running text doesn't sit flush against the crease in a two-page spread. That gutter kicks in at a CSS breakpoint of 768px, but the reader's own single-page-vs-two-page switch happens at a wider, separate breakpoint (1200px). Between those two numbers, the reader is still showing a single page, but the gutter CSS was already active — so a centered image in that single page ended up off-center (nudged away from the spine side), even though left-aligned text never showed the same problem.
+  - Fixed by having image pages specifically cancel out that gutter with an equal, opposite margin, so an image page's usable width is always the same symmetric box regardless of which breakpoint is in play. Text pages are untouched — they still get the gutter as before. Changed only `src/components/Book.tsx` (`renderPageBody` now takes which side the gutter is on, and a small new `gutterCounterClass` helper cancels it for `image`-kind pages).
+
+- **Verified**: Ran `npx tsc --noEmit` (clean), `npm run lint` (clean, zero warnings), and `npm run build` (production build succeeds). Did not launch the app myself — the fix is scoped purely to the image-page rendering path and doesn't touch text pagination or measurement, so no regression risk there was expected or introduced by this reasoning; the user's manual pass confirms actual centering.
+
+- **What's left**: Nothing scoped to this corrective round is left undone.
+
+## 2026-09-02 — Sub-project 3: PDF import / image-only pages
+
+- **Milestone/cycle**: Sub-project 3 — a unified `pages`-type content model for PDF-import and image-only/comic books, reusing the page-turn animation from Sub-project 2 unchanged.
+
+- **What was done**, in plain terms:
+  - `Book` now has a `content` field instead of a flat `chapters` array. `content` is one of two shapes: `{ type: "text", chapters: [...] }` (the existing prose books) or `{ type: "pages", pages: [...image URLs...], startsWithBlankPage? }` (new — PDF/comic books, where every "page" is just a picture). A book is always one or the other, never both (`src/types/book.ts`).
+  - `src/components/Book.tsx` (the reader) now checks `book.content.type` and takes one of two paths:
+    - Text books: exactly the same pagination-engine-driven flow as before — nothing changed here.
+    - Pages books: no pagination engine involved at all. The full list of page images is known upfront (no lazy generation, no "buffering ahead" — an image is either in the array or it isn't), so the reader just builds the page list once and indexes straight into it.
+  - The page-turn flip animation itself (the flipping "leaf", front/back faces, desktop two-page spread vs. mobile single page, reduced-motion, disabling buttons mid-flip) is **completely unchanged** — it was written generically enough that it just works once each page is described the same way internally, whether that page is text HTML or an image.
+  - Internally, a "page" can now be one of three kinds: `text` (title + HTML, as before), `image` (a picture), or `blank` (the placeholder used before a chapter/book starts). Two small render helper functions pick what to show based on the kind.
+  - If a page image fails to load, a "Page unavailable" message shows in its place instead of a broken-image icon or a crash — handled via the image's `onError` callback.
+  - Added a temporary way to view a pages-type book, since there's no shelf/routing yet to pick between books (that's Sub-project 4): visiting `/?pages=1` swaps in a small fixture book (`pagesTestBook` in `src/data/book.ts`) made of 6 placeholder page images. Plain `/` still shows the normal text book. This is clearly marked as temporary in both files and should be removed once real routing exists.
+  - Added 5 placeholder page images (simple colored squares with a large page number, as SVGs) under `public/books/test-pages/`, plus a 6th page entry that deliberately points at a file that doesn't exist, to exercise the "page unavailable" placeholder.
+
+- **Verified**: Ran `npx tsc --noEmit` (clean), `npm run lint` (clean, zero warnings), and `npm run build` (production build succeeds). Did not launch the app or verify it visually — that's the user's manual-test pass (see the report sent back to the planning session for the exact steps).
+
+- **What's left**: Nothing scoped to this milestone is left undone. Out-of-scope items (live PDF parsing, real shelf/routing, the resize position-loss bug) were intentionally not touched, per the hand-off brief.
+
 ## 2026-09-02 — Sub-project 2: Corrective round 4
 
 - **Milestone/cycle**: A fourth, small corrective round, from round 3's own fix. Round 3 removed the frame's flat 1000px width ceiling so it could keep growing on large screens — but the *outer wrapper* around the whole button/book layout still had its own, separate 1200px cap, left over from before round 2's sizing rework. On a wide, tall screen the frame's new width can now legitimately exceed 1200px, which means it no longer fits inside that outer wrapper - an element wider than its own centering container doesn't stay centered, it just overflows off to one side.
