@@ -3,7 +3,7 @@
 ## Current Version
 
 - Version: v0 (pre-release)
-- Status: implementation in progress — Sub-project 2 of 5 complete
+- Status: implementation in progress — Sub-project 3 of 5 complete
 - Released on: not yet released
 
 ## Current Phase
@@ -16,20 +16,14 @@ Implementing the sub-projects designed in Planning Cycle 1, in dependency order 
 
 ### Goal
 
-Sub-project 3: PDF import / image-only pages (unified `pages`-type content model, pre-rendered images, reuses the page-turn animation unchanged).
+Sub-project 4: Library/shelf view (`/[bookSlug]/[chapterSlug]` routing, explicit `slug` fields, Motion-based opening/closing transition).
 
 ### Planned Work
 
-- Introduce the unified `pages`-type content model on `Book` (ADR-005): `content: {type: 'text', chapters: Chapter[]} | {type: 'pages', pages: string[], startsWithBlankPage?: boolean}`
-- Reader renders pages-type content via `next/image` (fill + object-fit: contain), letterboxed inside the existing fixed-aspect-ratio book frame — no pagination engine involvement, page count is just array length
-- Reuse the existing page-turn animation (desktop spine-flip / mobile-tablet spine-hinge) unchanged for pages-type content
-- "Page unavailable" placeholder for a broken/missing page image
-- Desktop two-page spread / mobile-tablet single-page rules from Sub-project 2 apply the same way to pages-type books
-- Add a small pages-type test fixture (placeholder page images + a temporary book entry) for manual verification, since shelf/routing to pick between books doesn't exist yet (Sub-project 4)
+- To be scoped at dispatch time.
 
 ## Upcoming Milestones
 
-- Sub-project 4: Library/shelf view (`/[bookSlug]/[chapterSlug]` routing, explicit `slug` fields, Motion-based opening/closing transition)
 - Sub-project 5: Reading preferences (font size, app-chrome-only theme, saved reading position, single/two-page toggle) — includes fixing the pre-existing resize/repagination position-loss bug
 
 ## Future Ideas
@@ -44,6 +38,19 @@ Deferred, not rejected — may or may not get picked up later:
 - Inline images mixed into flowing text — currently believed unnecessary now that PDF/image-only pages and markdown text cover the format space between them; revisit only if a real case emerges that neither covers
 
 ## Completed Milestones
+
+### Sub-project 3: PDF import / image-only pages (2026-09-02)
+
+Introduced the unified `pages`-type content model: `Book.content` is now `{type: 'text', chapters}` | `{type: 'pages', pages, startsWithBlankPage}` (ADR-004/ADR-005). Pages-type books skip the pagination engine entirely and render via `next/image`, letterboxed inside the existing fixed-aspect-ratio book frame; the existing flip/hinge animation, buttons, and reduced-motion handling are reused unchanged (the reader's internal `Page` type is now a text/image/blank discriminated union).
+
+- [x] `content` type union on `Book` (ADR-005)
+- [x] `next/image` (fill + object-fit: contain) rendering for pages-type content, no pagination/fitting involvement
+- [x] Page-turn animation reused unchanged for pages-type content
+- [x] "Page unavailable" placeholder for a broken/missing page image
+- [x] Desktop two-page spread / mobile-tablet single-page rules apply the same way to pages-type books
+- [x] Temporary pages-type test fixture (`public/books/test-pages/`, reachable via `/?pages=1`) — marked TEMPORARY, to be removed once Sub-project 4's routing lands
+
+Corrective testing surfaced a real cross-cutting layout bug not scoped to this milestone's own new code (logged in `MISTAKES.md`): several page-frame styles (padding, text size, spacing, spine gutter) were still driven by Tailwind's own 768px/1024px breakpoints, left over from before Sub-project 2 moved the real single/two-page cutoff to a JS-driven 1200px — so single-page view had three inconsistent visual sub-ranges instead of one, affecting text pages as well as image pages. A first corrective pass fixed only the image-page symptom; the second pass found and fixed the actual cause, consolidating to one breakpoint-independent style gated by the same `isMobile` flag the reader already uses.
 
 ### Sub-project 2: Page-turn animation (2026-09-02)
 
