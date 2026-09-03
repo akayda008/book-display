@@ -2,9 +2,9 @@
 
 ## Current Version
 
-- Version: v0 (pre-release)
-- Status: all 5 originally planned sub-projects complete (feature-complete for Planning Cycle 1) — no release process or deployment target exists yet
-- Released on: not yet released
+- Version: v0.2
+- Status: released to `main` — all 5 Planning Cycle 1 sub-projects complete (rich text formatting, page-turn animation, PDF/image-only pages, library/shelf view, reading preferences), plus the post-Sub-project-4 chapter-URL-tracking bug fix. v0.1 was the pre-cycle base.
+- Released on: 2026-09-03
 
 ## Current Phase
 
