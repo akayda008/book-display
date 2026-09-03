@@ -16,7 +16,7 @@ export default async function ChapterPage({
   if (!chapter) notFound();
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-linear-to-t from-emerald-950 to-teal-800">
+    <div className="flex flex-col justify-center items-center min-h-screen bg-stone-100 dark:bg-stone-950">
       <BackToShelfLink />
       <ChapterReader book={book} initialChapterId={chapter.id} />
     </div>

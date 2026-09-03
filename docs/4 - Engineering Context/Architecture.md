@@ -10,9 +10,9 @@ A Next.js (App Router) / React app. No backend, no database. Content is hardcode
 - **Content data** (`data/book.ts` / per-book files) — `Book`/`Chapter` shape, markdown-authored text or pre-converted page images; a `books` library array plus `getBookBySlug`/`getChapterBySlug` lookups.
 - **Pagination engine** (`utils/pagination.ts`) — turns chapter markdown into discrete, page-sized chunks.
 - **Reader** (`components/Book.tsx`) — renders the current spread/page, drives the flip animation, owns `pagesPerView`/`layoutVersion`; accepts an optional `initialChapterId` to buffer forward to a deep-linked chapter.
-- **Routing** (`app/`) — shelf at `/`, `/[bookSlug]` (redirects to the first chapter for text books, renders the reader directly for pages-type books), reader at `/[bookSlug]/[chapterSlug]`, 404 fallback.
+- **Routing** (`app/`) — shelf at `/`, `/[bookSlug]` (client-redirects to the saved or first chapter for text books via `components/ResumeReadingRedirect.tsx`, renders the reader directly for pages-type books via `components/PagesBookReader.tsx`), reader at `/[bookSlug]/[chapterSlug]` (via `components/ChapterReader.tsx`), 404 fallback.
 - **Shelf transition** (`components/PageTransition.tsx`) — a context/provider (mounted in the root layout so it survives route changes) driving the generic "card grows into open book" Motion transition (ADR-003), plus its reverse via `components/BackToShelfLink.tsx`.
-- **Settings/preferences** — font size, theme, single/two-page toggle, saved position; persisted to `localStorage` (Sub-project 5).
+- **Settings/preferences** (`hooks/useReadingPreferences.ts`, `components/SettingsPanel.tsx`) — font size, theme, single/two-page toggle read from/written to global `localStorage` keys; saved reading position (`utils/readingPosition.ts`) is per-book.
 
 ## Component Responsibilities
 ### Content data
@@ -25,7 +25,7 @@ For text-type books only. Measures actual rendered DOM height (via a hidden meas
 Owns the currently-displayed spread/page, the flip animation, and `pagesPerView` (1 when mobile or the single-page preference is on, 2 otherwise). Renders parsed markdown (`dangerouslySetInnerHTML`, sanitized) for text pages, or a `next/image` for pages-type content. When given `initialChapterId` (a chapter deep-link), it buffers pages sequentially from the book's start until that chapter's first page appears, then opens there instead of at page 0 — pagination still can't jump straight to a page (see Known Limitations), so the position lands on the nearest `pagesPerView` boundary rather than always guaranteeing the chapter starts on the recto (right-hand) page in two-page mode.
 
 ### Routing
-Maps URLs to book/chapter slugs via `getBookBySlug`/`getChapterBySlug`. A book-only URL (`/[bookSlug]`) redirects to the first chapter for a text book; a pages-type book (no chapter concept) renders its reader directly at that same URL. An unknown book or chapter slug calls `notFound()` (standard 404).
+Maps URLs to book/chapter slugs via `getBookBySlug`/`getChapterBySlug`. A book-only URL (`/[bookSlug]`) for a text book renders `ResumeReadingRedirect`, a client component that reads the saved chapter slug from `localStorage` (per-book key) and replaces the URL with either that chapter or the first one — this decision has to happen client-side since the server-rendered route has no access to the reader's browser storage. A pages-type book (no chapter concept) renders its reader directly at that same URL. An unknown book or chapter slug calls `notFound()` (standard 404).
 
 ## Communication
 ```text

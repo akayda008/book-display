@@ -2,7 +2,10 @@
 
 import { useRef } from "react";
 import Book from "@/components/Book";
+import SettingsPanel from "@/components/SettingsPanel";
 import { Book as BookType } from "@/types/book";
+import { useReadingPreferences } from "@/hooks/useReadingPreferences";
+import { saveChapterSlug } from "@/utils/readingPosition";
 
 type ChapterReaderProps = {
   book: BookType;
@@ -11,9 +14,8 @@ type ChapterReaderProps = {
 
 /**
  * Keeps the URL honest as the reader flips across a chapter boundary -
- * distinct from Sub-project 5's planned saved-position `localStorage`
- * persistence, this only tracks the address bar against what's on screen
- * right now.
+ * distinct from the saved-position `localStorage` persistence below, this
+ * only tracks the address bar against what's on screen right now.
  *
  * Uses the raw History API (`window.history.replaceState`) rather than
  * `next/navigation`'s `router.replace()`. `router.replace()` still performs
@@ -27,6 +29,7 @@ type ChapterReaderProps = {
  */
 export default function ChapterReader({ book, initialChapterId }: ChapterReaderProps) {
   const lastChapterId = useRef(initialChapterId);
+  const { fontSize, setFontSize, theme, setTheme, singlePage, setSinglePage } = useReadingPreferences();
 
   function handleChapterChange(chapterId: string) {
     if (chapterId === lastChapterId.current) return;
@@ -36,7 +39,26 @@ export default function ChapterReader({ book, initialChapterId }: ChapterReaderP
     const chapter = book.content.chapters.find((c) => c.id === chapterId);
     if (!chapter) return;
     window.history.replaceState(null, "", `/${book.slug}/${chapter.slug}`);
+    saveChapterSlug(book.slug, chapter.slug);
   }
 
-  return <Book book={book} initialChapterId={initialChapterId} onChapterChange={handleChapterChange} />;
+  return (
+    <>
+      <SettingsPanel
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        theme={theme}
+        setTheme={setTheme}
+        singlePage={singlePage}
+        setSinglePage={setSinglePage}
+      />
+      <Book
+        book={book}
+        initialChapterId={initialChapterId}
+        onChapterChange={handleChapterChange}
+        fontSize={fontSize}
+        singlePage={singlePage}
+      />
+    </>
+  );
 }

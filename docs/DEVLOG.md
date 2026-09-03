@@ -1,3 +1,57 @@
+## 2026-09-03 — Sub-project 5: Reading preferences
+
+- **Milestone/cycle**: Sub-project 5 (the last of the five originally planned sub-projects) — reading preferences settings panel, saved reading position, and the resize/repagination position-loss bug fix, on `feature/reading-preferences` off `develop`.
+
+- **What was done**, in plain terms:
+  - **Settings panel**: a small gear button (top-right of the reader, opposite the "Back to shelf" link) opens a panel with three controls: font size (Small/Medium/Large — fixed steps, not a slider), theme (Light/Dark), and a "Single page" checkbox. The whole panel is hidden entirely on mobile-width screens (not just the single-page checkbox), since none of these controls are useful there in the same way.
+  - **Font size**: choosing a step changes the text size on the book page and re-fits the current chapter to the new size, landing back on the same chapter (not resetting to the start).
+  - **Theme**: Light/Dark only recolors the app chrome around the book — page backgrounds, the settings panel, the Previous/Next buttons, the back-to-shelf link. The book page itself always keeps its warm amber-paper look in both themes, by design (this was already decided and written down as ADR-008). First-time visitors get whatever their OS is set to (light or dark); once they pick one in the panel, that choice is remembered and overrides the OS setting from then on.
+  - **Single/two-page toggle**: on a wide (desktop) screen, checking "Single page" switches the reader to one page at a time instead of a two-page spread, the same view mobile always uses. On mobile the checkbox doesn't even appear, since mobile is always single-page regardless.
+  - **All three of the above** are remembered across visits (shared across every book, not per-book), stored in the browser's `localStorage`. If the browser blocks that (e.g. private browsing), the app just quietly falls back to its defaults instead of showing an error.
+  - **Saved reading position**: the reader now remembers which chapter you were last on, separately for each book. Opening a book from the shelf jumps straight back to that chapter; a book you've never opened before still starts at chapter 1.
+  - **Fixed a real bug**: resizing the browser window mid-read (or now, changing font size mid-read) used to silently snap the reader back to whichever chapter the page had originally loaded with — discarding real reading progress with no warning. The reader now keeps track of the chapter actually being read and re-anchors there instead, on every resize or font-size change, not just the very first load.
+
+- **Verified**: Ran `npm run lint` (clean, zero warnings/errors) and `npm run build` (Next.js production build + TypeScript check, succeeds cleanly, all four routes compile). Did not launch the app or click through it — that's the user's manual-verification pass (checklist below).
+
+- **What's left**: Nothing scoped to this milestone is left undone. Manual verification (visual/behavioral) is still needed before merging.
+
+## 2026-09-03 — Sub-project 5, corrective round 3: settings panel closes on outside interaction
+
+- **Milestone/cycle**: Small follow-up on Sub-project 5, same `feature/reading-preferences` branch off `develop`, from a direct user request (not a formal verification round).
+
+- **What was done**: `src/components/SettingsPanel.tsx` now closes the open panel when the user clicks/taps anywhere outside it, or presses Escape, instead of staying open until the gear icon is clicked again.
+
+- **Verified**: Ran `npm run lint` (clean) and `npm run build` (clean).
+
+- **What's left**: Nothing. A second request from the same message (continuous/free-window-resize page layout, recalculating live) was intentionally not implemented - flagged back to the planning session as needing its own scoping/brainstorm pass rather than building it inside this milestone; see the message sent to book-display-8c for the reasoning.
+
+## 2026-09-03 — Sub-project 5, corrective round 2: frame shape, settings panel reach, chrome color palette
+
+- **Milestone/cycle**: Corrective round 2 on Sub-project 5, same `feature/reading-preferences` branch off `develop`, following the user's second manual-verification pass. Both round-1 fixes were confirmed correct.
+
+- **What was done**, in plain terms:
+  - **Frame shape now follows the single-page toggle**: round 1 deliberately kept the book frame's outer shape (tall vs. wide) tied only to the real screen width, so a desktop window with "Single page" checked still got the wide desktop-shaped frame with one side hidden. The user asked for the opposite: with the toggle on, the frame itself should switch to the taller, mobile-shaped frame too, so it's visually indistinguishable from real mobile. Changed in `src/components/Book.tsx`: the frame-sizing decision now uses the same combined "single-page view" flag as everything else, instead of the raw screen-width check.
+  - **Settings panel reachable on mobile**: the original brief said to hide the whole settings panel on narrow/mobile screens, but that was an overly broad reading of the actual design rule, which only calls out the single/two-page checkbox specifically (it's genuinely useless on mobile, since mobile always forces single-page regardless). Font size and theme are both perfectly usable on mobile. Fixed in `src/components/SettingsPanel.tsx`: the gear icon and panel now show at every screen width; only the "Single page" checkbox inside the panel hides itself on a true mobile-width screen.
+  - **Chrome color palette replaced**: the user didn't like the previous cool gray/blue-green chrome colors and asked for something warmer, matching the book's own warm identity. Backgrounds, text, and borders across the shelf, reader chrome, back-to-shelf link, and settings panel were switched from Tailwind's cool "slate"/"emerald"/"teal" colors to its warm "stone" neutral family, with a muted amber/terracotta color (from Tailwind's "amber" scale, a few shades different from the book page's own amber tone) used for buttons, the settings gear, and active/hover states. The book page itself was not touched — it keeps its exact original amber-paper look in both themes, unchanged, as required.
+
+- **Verified**: Ran `npm run lint` (clean) and `npm run build` (clean). Did not launch the app - user's manual-verification pass.
+
+- **What's left**: Nothing scoped to this corrective round is left undone.
+
+## 2026-09-03 — Sub-project 5, corrective round 1: settings panel button shift + broken single-page toggle
+
+- **Milestone/cycle**: Corrective round 1 on Sub-project 5, same `feature/reading-preferences` branch off `develop`, following the user's first manual-verification pass.
+
+- **What was done**, in plain terms:
+  - **Gear icon shifting position**: the settings panel used to be laid out as a plain sibling below the gear button, so when it opened, its wider content made the whole (fixed-positioned, shrink-to-fit) wrapper grow — which visually shoved the gear button itself to the left. Fixed by making the open panel an absolutely-positioned overlay anchored to the button's corner instead, so it no longer affects the button's own position at all.
+  - **Single/two-page toggle doing nothing visible**: the toggle was only wired into the calculation of how many pages to generate/advance per click, not into any of the several other places in `Book.tsx` that separately decide "show one page or two" (which page column is hidden, which page-turn animation plays, the spine gutter, the turning-leaf's position). Those were all still checking the raw mobile-viewport flag directly, so on a desktop-width window the toggle silently had almost no visible effect. Fixed by introducing one combined "single-page view" flag (mobile viewport OR the preference is on) and routing every one of those decisions through it — while deliberately leaving the book frame's physical shape (its aspect ratio) tied to the real viewport width only, per Design Direction, since that's not supposed to change just because the preference is on.
+  - Logged as a real mistake in `docs/MISTAKES.md` (the single-page toggle bug) — the gear-shift issue was a straightforward CSS positioning oversight, not logged as a "mistake" in that sense.
+  - Deferred, not addressed this round (per the verification note): the user's dislike of the current light/dark color choices is visual-polish feedback for a later pass, not a defect — no color values were changed.
+
+- **Verified**: Ran `npm run lint` (clean) and `npm run build` (production build + TypeScript check, succeeds cleanly). Did not launch the app — that's the user's manual-verification pass again.
+
+- **What's left**: Nothing scoped to this corrective round is left undone. Color-palette polish for light/dark theme is intentionally deferred (to be logged as technical debt at close-out, per the planning session).
+
 ## 2026-09-02 — Bug fix, round 2: URL lagged/misreported at a chapter boundary
 
 - **Milestone/cycle**: Follow-up on the same bug fix (`bug/chapter-url-replace-navigation`, off `develop`) - the bounce-loop fix from round 1 worked, but the same manual pass found a related, smaller issue in the same feature.

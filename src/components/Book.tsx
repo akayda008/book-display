@@ -1,6 +1,7 @@
 "use client";
 
 import { Book as BookType } from "@/types/book";
+import { FontSize } from "@/types/preferences";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createPaginationState, generateNextPage } from "../utils/pagination";
@@ -11,6 +12,10 @@ type BookProps = {
   initialChapterId?: string;
   /** Fires (possibly repeatedly with the same id) whenever the currently-displayed chapter's `id` is known. Text books only. */
   onChapterChange?: (chapterId: string) => void;
+  /** Reading-preference font size step. Defaults to "medium". */
+  fontSize?: FontSize;
+  /** Reading-preference single-page override for desktop-width viewports. Mobile always forces single-page regardless. */
+  singlePage?: boolean;
 };
 
 type Page =
@@ -23,7 +28,7 @@ const EMPTY_PAGE: Page = { kind: "blank", id: "" };
 const TURN_MS = 650; // page-turn animation duration, both platforms
 
 // Below this width, the reader shows a single page instead of a two-page spread.
-const MOBILE_BREAKPOINT = 1200;
+export const MOBILE_BREAKPOINT = 1200;
 
 // Deliberately not Tailwind-responsive (no md:/lg:): the reader's own
 // single/two-page cutoff (MOBILE_BREAKPOINT, 1200px) is JS-driven and doesn't
@@ -35,11 +40,26 @@ const MOBILE_BREAKPOINT = 1200;
 // single-page range (and happens to already match what two-page mode - always
 // >1024px - rendered anyway).
 const framePagePadding = "p-8";
-const pageTextSize = "text-sm";
 const frameGap = "gap-4";
 
-export default function Book({ book, initialChapterId, onChapterChange }: BookProps) {
+// Fixed font-size steps (Design Direction: Typography Rules) - not a
+// continuous scale. Affects the pagination measurement clone too, since both
+// it and the real page share this class, so fitting stays accurate per step.
+const FONT_SIZE_CLASSES: Record<FontSize, string> = {
+  small: "text-xs",
+  medium: "text-sm",
+  large: "text-base",
+};
+
+export default function Book({
+  book,
+  initialChapterId,
+  onChapterChange,
+  fontSize = "medium",
+  singlePage = false,
+}: BookProps) {
   const isPagesBook = book.content.type === "pages";
+  const pageTextSize = FONT_SIZE_CLASSES[fontSize];
 
   const [pages, setPages] = useState<Page[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -52,10 +72,23 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
   const [flipT, setFlipT] = useState(0); // 0 -> 1 drives the animated transform
 
   const totalPages = pages.length;
+  // Whether the reader shows/advances one page at a time rather than a
+  // two-page spread - true on mobile viewports regardless of the
+  // preference, or on a desktop-width viewport when the single-page
+  // preference is on. This (not the raw `isMobile` viewport flag) drives
+  // every single/two-page layout, animation-flavor, and frame-shape
+  // decision below - the desktop single-page preference is meant to be
+  // indistinguishable in shape from real mobile, not a same-shaped frame
+  // with one slot merely hidden. `isMobile` itself is reserved for the one
+  // place that's genuinely about the physical viewport rather than the
+  // effective page-count view: the settings panel hiding the toggle that
+  // controls this very preference, which is only inert on a true mobile
+  // viewport.
+  const singlePageView = isMobile || singlePage;
   // Pages shown at once, AND how many real pages one click moves through -
   // desktop shows and advances by a true, non-overlapping pair (1-2, 3-4, ...);
-  // mobile shows and advances by a single page.
-  const pagesPerView = isMobile ? 1 : 2;
+  // single-page view shows and advances by a single page.
+  const pagesPerView = singlePageView ? 1 : 2;
 
   const leftPage = pages[currentPage] ?? EMPTY_PAGE;
   const rightPage = pages[currentPage + 1] ?? EMPTY_PAGE;
@@ -67,6 +100,14 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
   const isAnimatingRef = useRef(false);
   const reducedMotionRef = useRef(false);
   const endTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Chapter actually being read right now (updated by the chapter-tracking
+  // effect below), as opposed to `initialChapterId` which is fixed at mount.
+  // The main pagination effect re-anchors to this on every run after the
+  // first, so a resize or font-size change doesn't snap back to the route's
+  // original chapter (see MISTAKES.md / Technical Debts.md - the
+  // resize/repagination position-loss bug).
+  const currentChapterIdRef = useRef<string | null>(null);
+  const hasGeneratedOnceRef = useRef(false);
 
   // Pages-type books have no chapters and no buffering - the full page list is
   // known upfront, so "finished" is just "reached the last page" (handled via
@@ -102,12 +143,17 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
   // (`rightPage` is blank), or an out-of-range read past the end of the
   // book. At the very start of the book, `rightPage` is already the first
   // chapter's first page (real content), so no special-casing is needed
-  // there either.
+  // there either. Also tracks `currentChapterIdRef` regardless of whether
+  // `onChapterChange` is passed - the main pagination effect's re-anchor
+  // fix needs this even for pages-type/chapterless callers that don't wire
+  // up URL tracking.
   useEffect(() => {
-    if (book.content.type !== "text" || !onChapterChange) return;
+    if (book.content.type !== "text") return;
     const page = rightPage.kind === "text" ? rightPage : leftPage;
     if (page.kind !== "text") return;
-    onChapterChange(page.id.split("--page--")[0]);
+    const chapterId = page.id.split("--page--")[0];
+    currentChapterIdRef.current = chapterId;
+    onChapterChange?.(chapterId);
   }, [leftPage, rightPage, book.content.type, onChapterChange]);
 
   useEffect(() => {
@@ -262,6 +308,19 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
 
     resetPaginationState();
 
+    // The very first time this effect runs (initial mount / a real
+    // deep-link), anchor on `initialChapterId` as before. Any later run -
+    // triggered by `layoutVersion` bumping on resize or a font-size change -
+    // re-anchors instead to whatever chapter is actually being read right
+    // now (`currentChapterIdRef`), not the route's original chapter. Without
+    // this, every repagination silently snapped the reader back to
+    // `initialChapterId`, discarding real reading progress (Technical
+    // Debts.md's resize/repagination position-loss bug).
+    const anchorChapterId = hasGeneratedOnceRef.current
+      ? currentChapterIdRef.current ?? initialChapterId
+      : initialChapterId;
+    hasGeneratedOnceRef.current = true;
+
     // Deep-linking to a chapter can't jump straight there - the pagination
     // engine only knows page boundaries by generating sequentially from the
     // book's start (see Architecture: Known Limitations) - so buffer forward
@@ -282,11 +341,11 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
       if (!page) break;
       newPages.push({ kind: "text", ...page });
 
-      if (initialChapterId && targetIndex === null && page.id === `${initialChapterId}--page--0`) {
+      if (anchorChapterId && targetIndex === null && page.id === `${anchorChapterId}--page--0`) {
         targetIndex = newPages.length - 1;
       }
 
-      if (!initialChapterId) {
+      if (!anchorChapterId) {
         if (newPages.length >= 4) break;
       } else if (targetIndex !== null && newPages.length >= targetIndex + 1 + 3) {
         break;
@@ -309,6 +368,25 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isFirstFontSizeRunRef = useRef(true);
+  useEffect(() => {
+    // Skip the mount run - the initial pagination effect already accounts
+    // for the starting font size. A font-size change affects how much
+    // content fits per page exactly the same way a resize does, so it needs
+    // to trigger the same repagination path (bump layoutVersion), including
+    // interrupting any in-progress flip the same way handleResize does.
+    if (isFirstFontSizeRunRef.current) {
+      isFirstFontSizeRunRef.current = false;
+      return;
+    }
+    if (isAnimatingRef.current) {
+      clearAnimationTimers();
+      setIsAnimating(false);
+      setFlipT(0);
+    }
+    setLayoutVersion((v) => v + 1);
+  }, [fontSize]);
+
   const isNextDisabled =
     isAnimating ||
     (isPagesBook
@@ -316,13 +394,16 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
       : isBookFinished && currentPage + pagesPerView >= totalPages);
   const isPreviousDisabled = isAnimating || currentPage === 0;
 
-  // Mobile Previous is visually distinct from every other turn: instead of
-  // the *current* page flipping away to reveal what's underneath, the
-  // *incoming* page arrives from the left edge and settles on top, since a
-  // single mobile page has no natural mirror point to hinge the outgoing
-  // page against the way desktop's spine does.
-  const isMobilePrevious = isMobile && flipDir === -1;
-  const leafOnRight = isMobile ? true : flipDir === 1;
+  // Single-page-view Previous is visually distinct from every other turn:
+  // instead of the *current* page flipping away to reveal what's
+  // underneath, the *incoming* page arrives from the left edge and settles
+  // on top, since a single visible page has no natural mirror point to
+  // hinge the outgoing page against the way a two-page spread's spine does.
+  // Design Direction: this 360deg-spin flavor applies whenever only one
+  // page is shown - true mobile viewport or the single-page preference on
+  // desktop - not just true mobile.
+  const isSinglePagePrevious = singlePageView && flipDir === -1;
+  const leafOnRight = singlePageView ? true : flipDir === 1;
 
   let leafFront: Page = rightPage;
   let leafBack: Page = rightPage;
@@ -330,15 +411,15 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
   let baseRightPage: Page = rightPage;
 
   if (isAnimating) {
-    if (isMobilePrevious) {
+    if (isSinglePagePrevious) {
       // Base stays on the current page the whole time; the incoming leaf
       // (single-faced, see below) is what carries the new content in.
       leafFront = leftPage; // pages[currentPage] - the page we're turning back to
       baseRightPage = rightPage;
-    } else if (isMobile) {
+    } else if (singlePageView) {
       leafFront = rightPage; // the single page currently on screen
       leafBack = pages[currentPage + 2] ?? EMPTY_PAGE;
-      baseRightPage = leafBack; // only one slot on mobile - revealed target == landed target
+      baseRightPage = leafBack; // only one slot in single-page view - revealed target == landed target
     } else if (flipDir === 1) {
       leafFront = rightPage; // old right page
       leafBack = pages[currentPage + pagesPerView] ?? EMPTY_PAGE; // becomes the new left page
@@ -356,19 +437,19 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
     }
   }
 
-  const leafAngle = isMobilePrevious ? -180 + 180 * flipT : flipDir * -180 * flipT;
-  const leafFrontSide: "left" | "right" = isMobile ? "right" : leafOnRight ? "right" : "left";
-  const leafBackSide: "left" | "right" = isMobile ? "right" : leafOnRight ? "left" : "right";
+  const leafAngle = isSinglePagePrevious ? -180 + 180 * flipT : flipDir * -180 * flipT;
+  const leafFrontSide: "left" | "right" = singlePageView ? "right" : leafOnRight ? "right" : "left";
+  const leafBackSide: "left" | "right" = singlePageView ? "right" : leafOnRight ? "left" : "right";
 
   // Spine-side gutter, extra inner margin away from the book's crease -
   // meaningful only in true two-page mode (a single visible page has no
-  // spine to gutter against). Gated on the JS `isMobile` flag rather than a
+  // spine to gutter against). Gated on `singlePageView` rather than a
   // Tailwind `md:`/`lg:` breakpoint, since MOBILE_BREAKPOINT (1200px) doesn't
   // line up with Tailwind's defaults (768px/1024px) - a `md:`-based gutter
   // used to stay active for part of the single-page range, which is what
   // caused the off-center content reported in verification.
   function gutterPad(side: "left" | "right") {
-    if (isMobile) return "";
+    if (singlePageView) return "";
     return side === "left" ? "pl-12" : "pr-12";
   }
   const leafFrontPad = gutterPad(leafFrontSide);
@@ -383,8 +464,12 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
   // the other dimension either. Deliberately no absolute pixel cap: an
   // earlier version added one (62.5rem) as a safety net, but it stopped the
   // desktop frame from growing past ~1440px on large screens, defeating the
-  // whole point of scaling to fill available space.
-  const frameSizeStyle = isMobile
+  // whole point of scaling to fill available space. Keyed on
+  // `singlePageView` (not the raw viewport flag): the user explicitly wants
+  // the desktop single-page preference to produce a genuinely mobile-shaped
+  // (taller, 3:5) frame, indistinguishable from real mobile - not the
+  // desktop-shaped (5:3) frame with one slot merely hidden.
+  const frameSizeStyle = singlePageView
     ? { width: "min(90vw, calc(70vh * 3 / 5))", aspectRatio: "3 / 5" }
     : { width: "min(80vw, calc(78vh * 5 / 3))", aspectRatio: "5 / 3" };
 
@@ -445,7 +530,7 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
         {/* Measure ref - kept geometrically identical to the real right page column below */}
         <div className="absolute invisible pointer-events-none mx-auto inset-x-0" style={frameSizeStyle}>
           <div className="flex h-full w-full flex-row">
-            <div className={`${isMobile ? "hidden" : "block"} flex-1 overflow-hidden`} />
+            <div className={`${singlePageView ? "hidden" : "block"} flex-1 overflow-hidden`} />
             <div className="w-full md:flex-1 overflow-hidden border-l">
               <div className={`${framePagePadding} ${gutterPad("right")} flex flex-col h-full`}>
                 <h2 ref={titleMeasureRef} className="text-center text-2xl mb-4 empty:hidden"></h2>
@@ -465,7 +550,7 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
           <div className="flex h-full w-full flex-row">
             {/* Left Page */}
             <div
-              className={`${isMobile ? "hidden" : "block"} flex-1 overflow-hidden text-black bg-linear-to-r from-black/10 to-transparent`}
+              className={`${singlePageView ? "hidden" : "block"} flex-1 overflow-hidden text-black bg-linear-to-r from-black/10 to-transparent`}
             >
               <div className={`${framePagePadding} ${gutterPad("left")} flex flex-col h-full`}>
                 {renderPageTitle(baseLeftPage)}
@@ -473,7 +558,7 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
               </div>
             </div>
 
-            {/* Right Page (the only page shown on mobile) */}
+            {/* Right Page (the only page shown in single-page view) */}
             <div className="w-full md:flex-1 overflow-hidden text-black border-l bg-linear-to-l from-black/10 to-transparent">
               <div className={`${framePagePadding} ${gutterPad("right")} flex flex-col h-full`}>
                 {renderPageTitle(baseRightPage)}
@@ -487,9 +572,9 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
             <div
               className="absolute top-0 bottom-0 border-l"
               style={{
-                left: isMobile ? 0 : leafOnRight ? "50%" : 0,
-                right: isMobile ? 0 : leafOnRight ? 0 : "50%",
-                transformOrigin: isMobile ? "left center" : leafOnRight ? "left center" : "right center",
+                left: singlePageView ? 0 : leafOnRight ? "50%" : 0,
+                right: singlePageView ? 0 : leafOnRight ? 0 : "50%",
+                transformOrigin: singlePageView ? "left center" : leafOnRight ? "left center" : "right center",
                 transform: `rotateY(${leafAngle}deg)`,
                 transformStyle: "preserve-3d",
                 transition: `transform ${TURN_MS}ms ease-in-out`,
@@ -511,7 +596,7 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
                   Not needed for mobile Previous: the base layer underneath already
                   shows the right thing throughout, so there's nothing for a back
                   face to reveal. */}
-              {!isMobilePrevious && (
+              {!isSinglePagePrevious && (
                 <div
                   className="absolute inset-0 overflow-hidden text-black bg-amber-50"
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
@@ -535,10 +620,10 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
           onClick={goPrevious}
           disabled={isPreviousDisabled}
           className={`
-            px-4 py-2 text-xs text-slate-50
+            px-4 py-2 text-xs text-stone-800 dark:text-stone-100
             max-h-fit rounded-md shadow-2xs shadow-amber-50
             transition
-            hover:bg-emerald-800 hover:shadow-sm
+            hover:bg-amber-700 dark:hover:bg-amber-600 hover:text-white hover:shadow-sm
             disabled:opacity-40 disabled:pointer-events-none
           `}
         >
@@ -548,10 +633,10 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
           onClick={goNext}
           disabled={isNextDisabled}
           className={`
-            px-4 py-2 text-xs text-white
+            px-4 py-2 text-xs text-stone-800 dark:text-stone-100
             max-h-fit rounded-md shadow-2xs shadow-amber-50
             transition
-            hover:bg-emerald-800 hover:shadow-sm
+            hover:bg-amber-700 dark:hover:bg-amber-600 hover:text-white hover:shadow-sm
             disabled:opacity-40 disabled:pointer-events-none
           `}
         >
