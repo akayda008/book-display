@@ -3,7 +3,7 @@
 ## Current Version
 
 - Version: v0 (pre-release)
-- Status: implementation in progress — Sub-project 4 of 5 complete
+- Status: all 5 originally planned sub-projects complete (feature-complete for Planning Cycle 1) — no release process or deployment target exists yet
 - Released on: not yet released
 
 ## Current Phase
@@ -14,16 +14,11 @@ Implementing the sub-projects designed in Planning Cycle 1, in dependency order 
 
 ## Current Milestone
 
-### Goal
-
-Sub-project 5: Reading preferences (font size, app-chrome-only theme, saved reading position, single/two-page toggle) — includes fixing the pre-existing resize/repagination position-loss bug.
-
-### Planned Work
-
-- To be scoped at dispatch time.
+None — all five originally planned sub-projects (Planning Cycle 1) are complete. The next milestone starts with a fresh planning cycle (see `project-kickoff`) to decide what v0.1 (or beyond) actually covers, rather than continuing this Roadmap's dependency-ordered list.
 
 ## Upcoming Milestones
 
+None currently — see Future Ideas below for what a future planning cycle could draw from.
 
 ## Future Ideas
 
@@ -35,8 +30,27 @@ Deferred, not rejected — may or may not get picked up later:
 - Table of contents, in-book search, bookmarks
 - Content-authoring ergonomics: a markdown-file loader, and only if truly warranted, a headless CMS
 - Inline images mixed into flowing text — currently believed unnecessary now that PDF/image-only pages and markdown text cover the format space between them; revisit only if a real case emerges that neither covers
+- Live (drag-to-resize) repagination — resizing the reader window shows the reflowed layout continuously as you drag, rather than only after you release. Needs its own scoping/brainstorm pass, not a quick add: the pagination engine is sequential/stateful (can't jump to an arbitrary page, only regenerate forward from a chapter boundary), continuous resize events would need either debouncing (defeating the point) or a per-frame DOM-measurement fitting pass (a real performance question), and what (if anything) renders live mid-drag vs. only on release is a genuine UX decision.
 
 ## Completed Milestones
+
+### Sub-project 5: Reading preferences (2026-09-03)
+
+Added a settings panel (font size, theme, single/two-page toggle), saved reading position, and fixed the pre-existing resize/repagination position-loss bug — the last of the five originally planned sub-projects.
+
+- [x] Settings panel in the reader, reachable at every viewport width: font size (fixed steps: Small/Medium/Large), light/dark theme (app chrome only, ADR-008 — book page stays amber in both themes), single/two-page toggle (only the toggle control itself is hidden on true mobile, since it'd be inert there)
+- [x] All three preferences persist to global `localStorage` keys, degrading silently to in-memory defaults if storage is unavailable
+- [x] Saved reading position: current chapter written to a per-book `localStorage` key on every chapter change; opening a book from the shelf resumes at the saved chapter via a client-side redirect (localStorage isn't visible server-side), or the first chapter if none saved
+- [x] Fixed the resize/repagination position-loss bug: repagination now re-anchors to the chapter actually being read (tracked in a ref, reusing the chapter-detection logic from the recent URL-tracking bug fix) on every run after the initial mount, instead of snapping back to the route's original chapter
+- [x] Font-size changes trigger the same repagination/re-anchor path as a resize
+- [x] Chrome color palette reworked to Tailwind's warm `stone` neutrals with a muted `amber` accent, replacing the original cool-gray defaults, at the user's explicit request and full creative discretion — the book page itself stays untouched (unchanged amber paper, both themes)
+- [x] Settings panel closes on an outside click/tap or Escape, not just by re-clicking the gear icon
+
+Design changes made during manual verification, beyond the original scope:
+- The frame's shape (not just page count) now follows the effective single/two-page view, not just the raw mobile/desktop breakpoint — checking the single-page toggle on desktop switches to the genuinely mobile-shaped (taller) frame, not the desktop-shaped frame with one slot hidden.
+- The settings panel itself is reachable on mobile after all — the original brief over-broadly hid the whole panel there; Design Direction's actual rule only hides the single/two-page toggle specifically, since font size and theme remain meaningful on mobile.
+
+Corrective testing fixed one real bug (logged in `MISTAKES.md`): the single/two-page toggle was only wired into page-count/advance logic, not into any of the other places `Book.tsx` decided one-page-vs-two (which column is hidden, which flip animation plays, the spine gutter) — those all still checked the raw `isMobile` flag directly, so the toggle silently had almost no visible effect beyond removing the leading blank page.
 
 ### Sub-project 4: Library/shelf view (2026-09-02)
 

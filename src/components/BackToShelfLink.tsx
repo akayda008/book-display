@@ -18,7 +18,7 @@ export default function BackToShelfLink() {
     <Link
       href="/"
       onClick={handleClick}
-      className="fixed top-4 left-4 z-40 text-xs text-slate-50/80 hover:text-slate-50 underline"
+      className="fixed top-4 left-4 z-40 text-xs text-stone-800/80 dark:text-stone-100/80 hover:text-amber-800 dark:hover:text-amber-500 underline"
     >
       ← Back to shelf
     </Link>

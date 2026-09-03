@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { books } from "@/data/book";
 import { Book as BookType } from "@/types/book";
 import { useBookTransition } from "@/components/PageTransition";
+import { useReadingPreferences } from "@/hooks/useReadingPreferences";
 
 function BookCard({ book }: { book: BookType }) {
   const cardRef = useRef<HTMLButtonElement>(null);
@@ -33,9 +34,15 @@ function BookCard({ book }: { book: BookType }) {
 }
 
 export default function Home() {
+  // Applies the saved/OS-derived theme's `dark` class to <html> - the shelf
+  // has no settings panel of its own (Sub-project 5's panel lives in the
+  // reader), but its background is still app chrome per ADR-008, so it
+  // should reflect whatever theme was last chosen there.
+  useReadingPreferences();
+
   return (
-    <div className="min-h-screen bg-linear-to-t from-emerald-950 to-teal-800 flex flex-col items-center py-16 px-4">
-      <h1 className="text-3xl text-slate-50 mb-10">Library</h1>
+    <div className="min-h-screen bg-stone-100 dark:bg-stone-950 flex flex-col items-center py-16 px-4">
+      <h1 className="text-3xl text-stone-800 dark:text-stone-100 mb-10">Library</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
         {books.map((book) => (
           <BookCard key={book.slug} book={book} />

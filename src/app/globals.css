@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (Tailwind v4): `dark:` utilities apply when an
+   ancestor carries the `.dark` class, toggled by useReadingPreferences based
+   on the stored preference (falling back to the OS setting on first visit).
+   Scoped to app chrome only - the book page itself never reads this class,
+   so its amber-paper look stays constant regardless of theme (ADR-008). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Warm-neutral (stone) chrome palette, matching the stone/amber scheme used
+   throughout app chrome - a cool slate/zinc/gray default clashed with the
+   book page's warm amber-paper identity. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f5f4; /* stone-100 */
+  --foreground: #292524; /* stone-800 */
 }
 
 @theme inline {
@@ -12,11 +22,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #0c0a09; /* stone-950 */
+  --foreground: #f5f5f4; /* stone-100 */
 }
 
 body {
