@@ -1,3 +1,30 @@
+## 2026-09-02 — Bug fix, round 2: URL lagged/misreported at a chapter boundary
+
+- **Milestone/cycle**: Follow-up on the same bug fix (`bug/chapter-url-replace-navigation`, off `develop`) - the bounce-loop fix from round 1 worked, but the same manual pass found a related, smaller issue in the same feature.
+
+- **What was done**, in plain terms:
+  - The edge case: on a wide (desktop, two-page) screen, when the two visible pages were the last page of one chapter and the first page of the next, the URL kept showing the *old* chapter even though the new chapter's page was already visible on the right. On a narrow (mobile, single-page) screen, the URL was one flip *late* - it only updated after moving on to the new chapter's *second* page, not its first.
+  - Root cause: the code that decides which chapter to put in the URL was looking at the wrong one of the two pages the reader keeps track of internally (`leftPage` and `rightPage`). On mobile, only `rightPage` is actually shown on screen - `leftPage` there is really "the page just flipped away from". On desktop, `rightPage` is always the further-along, right-hand page. The code had it backwards on both counts, preferring `leftPage` first.
+  - Fix: `src/components/Book.tsx` now checks `rightPage` first (falling back to `leftPage` only right at the very end of the book, where there's no next page to check). One change fixes both platforms, since `rightPage` was the right page to prioritize either way.
+
+- **Verified**: Ran `npx tsc --noEmit` (clean), `npm run lint` (clean, zero warnings), and `npm run build` (production build succeeds). Traced the fix by hand against the flip-rendering code's own comments (which already documented `rightPage` as "the single page currently on screen" on mobile) rather than clicking through it live - the user's manual pass is the real check.
+
+- **What's left**: Nothing scoped to this round is left undone.
+
+## 2026-09-02 — Bug fix: reader got stuck bouncing at a chapter boundary
+
+- **Milestone/cycle**: Post-merge bug fix (not a milestone) on `bug/chapter-url-replace-navigation`, off `develop`. Regression in Sub-project 4's URL-tracking feature.
+
+- **What was done**, in plain terms:
+  - The bug: after Sub-project 4 shipped, clicking Next enough times to cross into a new chapter would sometimes get the reader stuck - it would snap back to the chapter you'd just finished, and clicking Next again just bounced back and forth instead of moving forward.
+  - Root cause: the URL-tracking feature was using Next.js's `router.replace()` to update the address bar as you crossed into a new chapter. That function looks like a simple "just change the URL" call, but it's actually a real page navigation under the hood - it re-runs the route's data-loading code, which then told the reader "start over from this chapter" via the same mechanism used for opening a direct link to a chapter (e.g. pasting a chapter URL into the address bar). That "start over" logic doesn't always land in exactly the same spot you were already at, and could land one page too early - back in the chapter you'd just left - which then triggered *another* URL update back to that earlier chapter, and so on, forever.
+  - Fix: `src/components/ChapterReader.tsx` now updates the address bar using the browser's own, lower-level `window.history.replaceState` instead of `router.replace()`. This changes what's shown in the address bar without re-running any of Next.js's page-loading logic, so the "start over from this chapter" behavior never gets triggered by ordinary flipping - only by an actual page load/refresh, which is what it was originally meant for.
+  - No changes to `src/components/Book.tsx`, the pagination engine, or the flip animation - this was purely how the URL gets updated.
+
+- **Verified**: Ran `npx tsc --noEmit` (clean), `npm run lint` (clean, zero warnings), and `npm run build` (production build succeeds). Traced the fix through the code by hand (confirmed `Book`'s `initialChapterId` prop, and therefore its deep-link-buffering effect, no longer changes after the initial mount once `ChapterReader` stops calling `router.replace()`) rather than clicking through it live - the user's manual pass is the real check that flipping across several chapter boundaries, in both directions, now works end to end.
+
+- **What's left**: Nothing scoped to this bug fix is left undone.
+
 ## 2026-09-02 — Sub-project 4: Corrective round 1
 
 - **Milestone/cycle**: First corrective round on Sub-project 4, addressing three issues from manual verification.
