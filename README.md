@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Book Display
+
+A Next.js/React flipbook reader component. It renders text, PDF, or image-only books with a real page-turn animation, so reading digitally feels closer to reading a physical book — two-page spreads, a paper-like frame, and click-triggered page turns instead of scrolling.
+
+## Features
+
+- **Rich text rendering** — chapters are authored in Markdown (bold/italic, headings, lists, blockquotes, block alignment, poem-line indentation), fitted to the page by a height-based pagination engine that measures actual rendered content.
+- **Page-turn animation** — a custom CSS 3D flip: a two-page spine-fold on desktop, a single-page spine-hinge flip on mobile/tablet. Respects `prefers-reduced-motion`.
+- **PDF / image-only books** — a unified `pages`-type content model for pre-converted page images (comics, scans), reusing the same page-turn animation as text books.
+- **Library & routing** — a shelf page listing every book, with `/[bookSlug]/[chapterSlug]` routing, explicit human-readable slugs, and a Motion-based shelf-to-reader transition.
+- **Reading preferences** — font size, light/dark app theme (the book page itself always keeps its amber-paper look), and a single/two-page toggle — all persisted per browser, with reading position saved per book.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see it running.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Other scripts:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build   # production build
+npm run start   # run the production build
+npm run lint    # eslint
+```
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js](https://nextjs.org) (App Router) / [React](https://react.dev)
+- [Tailwind CSS](https://tailwindcss.com) v4
+- [`marked`](https://marked.js.org) for Markdown parsing, [DOMPurify](https://github.com/cure53/DOMPurify) for sanitization
+- [Motion](https://motion.dev) for the shelf-opening transition
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Content
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Book content is currently hardcoded in `src/data/book.ts` (no database, no CMS) — a text-type book stores Markdown per chapter, a pages-type book stores an ordered list of pre-converted page images. See `docs/1 - Project Context/Page Specification.md` for the exact content model.
 
-## Deploy on Vercel
+## Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Full project documentation lives in `docs/`, from product context through engineering standards to maintenance notes. Start at [`docs/2 - Engineering Standards/AI Context.md`](docs/2%20-%20Engineering%20Standards/AI%20Context.md) for an overview of the project, its architecture, and current status, or [`docs/1 - Project Context/Roadmap.md`](docs/1%20-%20Project%20Context/Roadmap.md) for what's been built and what's next.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Status
+
+v0.2 — all five sub-projects from the first planning cycle are complete (rich text formatting, page-turn animation, PDF/image-only pages, library/shelf view, reading preferences). No deployment target exists yet; this is local-development only for now.
