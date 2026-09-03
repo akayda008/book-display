@@ -91,12 +91,21 @@ export default function Book({ book, initialChapterId, onChapterChange }: BookPr
   // Keeps the caller (the chapter route) informed of which chapter is
   // actually on screen, so it can shallow-update the URL as the reader
   // flips across a chapter boundary - a page id is `${chapterId}--page--N`,
-  // so the prefix before "--page--" is the chapter id. Falls back to the
-  // right page when the left is blank (only ever true at the very start of
-  // the book).
+  // so the prefix before "--page--" is the chapter id. Prefers `rightPage`:
+  // on mobile it's the only page actually rendered (see `baseRightPage`
+  // below, and the flip code's own "the single page currently on screen"
+  // comment) - `leftPage` there is what was just flipped away from. On
+  // desktop it's the further-along page of the spread, so a spread that
+  // straddles a chapter boundary should report the new chapter, not the one
+  // ending on the left. Falls back to `leftPage` only when `rightPage`
+  // isn't text - the book's last page on an odd-length desktop spread
+  // (`rightPage` is blank), or an out-of-range read past the end of the
+  // book. At the very start of the book, `rightPage` is already the first
+  // chapter's first page (real content), so no special-casing is needed
+  // there either.
   useEffect(() => {
     if (book.content.type !== "text" || !onChapterChange) return;
-    const page = leftPage.kind === "text" ? leftPage : rightPage;
+    const page = rightPage.kind === "text" ? rightPage : leftPage;
     if (page.kind !== "text") return;
     onChapterChange(page.id.split("--page--")[0]);
   }, [leftPage, rightPage, book.content.type, onChapterChange]);
