@@ -5,6 +5,23 @@ This project is pre-implementation for Planning Cycle 1 — most "debt" here is 
 
 ## Current Technical Debt
 
+### Placeholder/test content is mixed into the real data, not separated
+**Problem:**
+`src/data/book.ts` mixes real content with development-only fixtures, with no structural separation between them:
+- Three temporary test chapters (`chapterTestFormatting`, `chapterTestList`, `chapterTestBlockquote`) are appended directly into `book1`'s real chapter list, alongside its 12 genuine chapters — kept deliberately through Sub-project 1 as living regression coverage, but never actually separated out.
+- "Sketchbook Pages" (originally `pagesTestBook`, promoted to a real permanent second shelf entry in Sub-project 4) uses placeholder SVGs (`public/books/test-pages/page-1.svg` through `page-5.svg` — solid-color squares with a page number) as its actual page images, not real content.
+
+**Impact:**
+A reader browsing the live shelf sees an admittedly-placeholder second book and, inside "My Work," three chapters that exist purely to exercise formatting edge cases rather than being real writing. Fine for development/regression testing, not fine as the actual shelf a visitor sees. Also makes it harder for a future contributor to tell "real content" from "test fixture" at a glance, since both currently live in the same file with no naming/structural distinction.
+
+**Possible Solution:**
+Move test-only content into a clearly separate fixture (e.g. a `data/fixtures.ts` or similar, not exported alongside the real `books` registry, or gated behind a dev-only flag the way the old `/?pages=1` switch worked before Sub-project 4's routing existed) so the shelf a real visitor sees only ever contains real books/chapters. Replace "Sketchbook Pages"'s placeholder SVGs with genuine image content once available (or remove the book from the live shelf entirely until then). If the markdown/pagination regression coverage the three test chapters provide is still wanted, keep it as a dev-only fixture rather than real shelf content — worth deciding whether that coverage is even still needed now that this cycle's corrective testing already exercised those edge cases thoroughly.
+
+**Priority:**
+- Medium (doesn't block reading, but affects what a real visitor to the live shelf would actually see)
+
+---
+
 ### Shelf-to-reader transition is a plain cover/reveal, not a true shared-element morph
 **Problem:**
 The shelf-to-reader Motion transition (Sub-project 4) is a full-viewport overlay that scales/translates via `transform` from the clicked card's position — a fixed after Sub-project 4's corrective round 1 removed layout-thrashing `width`/`height`/`top`/`left` animation. It approximates "card grows into open book" but isn't a true DOM-measured shared-element animation (Next.js unmounts the shelf route's tree on navigation, so the card and the reader frame are never actually the same animated element), and the user felt it still wasn't fully satisfying even after the smoothness fix.
